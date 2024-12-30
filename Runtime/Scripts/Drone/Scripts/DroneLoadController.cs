@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -34,15 +34,16 @@ public class DroneLoadController: MonoBehaviour
     [Header("Load")]
     [Tooltip("The rope object that this drone is expected to get connected, maybe. Will be used to check for attachment state and such.")]
     public Transform Rope; // TODO remove this requirement.
-    [Tooltip("If true, instead of tracking the target object, drone will first track the buoy and when attached to it, make the LoadLinkTF track the target.")]
-    public bool AttackTheBuoy = false;
     [Tooltip("The position of where the load is attached to the rope. rope_link on SAM")]
     public Transform LoadLinkTF; // The position of the AUV is taken at the base of the rope
 
     [Header("Props")]
     public Transform PropFR, PropFL, PropBR, PropBL;
     
-
+    [Header("Trajectories")]
+    public bool AttackTheBuoy = false;
+    public bool Figure8 = false;
+    public bool LogTrajectory = false;
 
 	Propeller[] propellers;
     float[] propellers_rpms;
@@ -308,6 +309,18 @@ public class DroneLoadController: MonoBehaviour
         Vector<double> aL_s_d;
         (xL_s_d, vL_s_d, aL_s_d) = TrackingTargetTrajectory(TrackingTargetTF.position.To<ENU>().ToDense(), xL_s, vL_s);
         
+        // Figure 8
+        if (Figure8) {
+            (xL_s_d, vL_s_d, aL_s_d) = Figure8Trajectory(Time.time);
+        }
+
+        // Logging
+        if (LogTrajectory) {
+            tw = new StreamWriter(filePath, true);
+            tw.WriteLine($"{Time.time},{xL_s[0]},{xL_s[1]},{xL_s[2]},{xL_s_d[0]},{xL_s_d[1]},{xL_s_d[2]}");
+            tw.Close();
+        }
+
         Vector<double> b1d = DenseVector.OfArray(new double[] { Math.Sqrt(2)/2, -Math.Sqrt(2)/2, 0 });
 
         // Load position controller
@@ -392,6 +405,11 @@ public class DroneLoadController: MonoBehaviour
         Vector<double> a_s_d;
         (x_s_d, v_s_d, a_s_d) = TrackingTargetTrajectory(TrackingTargetTF.position.To<ENU>().ToDense(), x_s, v_s);
 
+        // Figure 8
+        if (Figure8) {
+            (x_s_d, v_s_d, a_s_d) = Figure8Trajectory(Time.time);
+        }
+
         // Minum snap trajectory parameters 
         double T = 5.0; // Total time for trajectory
         
@@ -469,9 +487,11 @@ public class DroneLoadController: MonoBehaviour
         // Debug.Log($"t: {t}"); // Time
 
         // Logging
-        tw = new StreamWriter(filePath, true);
-        tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]}");
-        tw.Close();
+        if (LogTrajectory) {
+            tw = new StreamWriter(filePath, true);
+            tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]}");
+            tw.Close();
+        }
 
         Vector<double> b1d = DenseVector.OfArray(new double[] { Math.Sqrt(2)/2, -Math.Sqrt(2)/2, 0 });
 
@@ -645,6 +665,19 @@ public class DroneLoadController: MonoBehaviour
             v_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });//MaxVelocityWithTrackingTarget*distanceToTarget/DecelerationDistance*unitVectorTowardsTarget;
             a_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
         }
+
+        return (x_s_d, v_s_d, a_s_d);
+    }
+
+    (Vector<double>, Vector<double>, Vector<double>) Figure8Trajectory(double t) {
+        double t_max = 5;
+        double A = 2;
+        double B = 1;
+        double freq = 2 * Math.PI / t_max;
+
+        Vector<double> x_s_d = DenseVector.OfArray(new double[] { A*Math.Sin(freq*t), B*Math.Sin(2*freq*t), 0.5*Math.Sin(freq*t) + 1.5 });
+        Vector<double> v_s_d = DenseVector.OfArray(new double[] { A*freq*Math.Cos(freq*t), 2*B*freq*Math.Cos(2*freq*t), 0.5*freq*Math.Cos(freq*t) });
+        Vector<double> a_s_d = DenseVector.OfArray(new double[] { -A*freq*freq*Math.Sin(freq*t), -4*B*freq*freq*Math.Sin(2*freq*t), -0.5*freq*freq*Math.Sin(freq*t) });
 
         return (x_s_d, v_s_d, a_s_d);
     }
