@@ -18,6 +18,10 @@ propellers_rpms2 = df['propellers_rpms2']
 propellers_rpms3 = df['propellers_rpms3']
 propellers_rpms4 = df['propellers_rpms4']
 
+rollRad = df['rollRad']
+pitchRad = df['pitchRad']
+yawRad = df['yawRad']
+
 plt.figure(1)
 plt.subplot(3, 1, 1)
 plt.plot(t, x_s1, label='x_s1')
@@ -77,4 +81,19 @@ plt.ylabel("rpm")
 plt.xlabel("time")
 plt.legend()
 
+plt.figure(4)
+plt.subplot(3, 1, 1)
+plt.plot(t, rollRad, label='rollRad')
+plt.ylabel("Rad")
+plt.legend()
+
+plt.subplot(3, 1, 2)
+plt.plot(t, pitchRad, label='pitchRad')
+plt.ylabel("Rad")
+plt.legend()
+
+plt.subplot(3, 1, 3)
+plt.plot(t, yawRad, label='yawRad')
+plt.ylabel("Rad")
+plt.legend()
 plt.show()

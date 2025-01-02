@@ -263,7 +263,7 @@ public class DroneLoadController: MonoBehaviour
         */
 
         tw = new StreamWriter(filePath, false);
-        tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4");
+        tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad");
         tw.Close();
 
 	}
@@ -418,6 +418,18 @@ public class DroneLoadController: MonoBehaviour
         Vector<double> b1d_d;
         (x_s_d, v_s_d, a_s_d) = TrackingTargetTrajectory(TrackingTargetTF.position.To<ENU>().ToDense(), x_s, v_s);
 
+        // Quadrotor roll pitch yaw
+        Quaternion orientation = BaseLink.transform.rotation;
+        Vector3 eulerENU = orientation.eulerAngles;
+
+        double roll = eulerENU.x;
+        double pitch = eulerENU.y;
+        double yaw = eulerENU.z;
+
+        double rollRad = Mathf.Deg2Rad * roll;
+        double pitchRad = Mathf.Deg2Rad * pitch;
+        double yawRad = Mathf.Deg2Rad * yaw;
+
         // Figure 8
         if (Figure8) {
             (x_s_d, v_s_d, a_s_d) = Figure8Trajectory(Time.time);
@@ -508,7 +520,7 @@ public class DroneLoadController: MonoBehaviour
         if (LogTrajectory) {
             tw = new StreamWriter(filePath, true);
             //tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]}");
-            tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]},{propellers_rpms[0]},{propellers_rpms[1]},{propellers_rpms[2]},{propellers_rpms[3]}");
+            tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]},{propellers_rpms[0]},{propellers_rpms[1]},{propellers_rpms[2]},{propellers_rpms[3]},{rollRad},{pitchRad},{yawRad}");
             tw.Close();
         }
 
