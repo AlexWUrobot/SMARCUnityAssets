@@ -309,6 +309,7 @@ public class DroneLoadController: MonoBehaviour
         Vector<double> xL_s_d;
         Vector<double> vL_s_d;
         Vector<double> aL_s_d;
+        Vector<double> b1d_d;
         (xL_s_d, vL_s_d, aL_s_d) = TrackingTargetTrajectory(TrackingTargetTF.position.To<ENU>().ToDense(), xL_s, vL_s);
         
         // Figure 8
@@ -317,9 +318,9 @@ public class DroneLoadController: MonoBehaviour
         }
 
         // Helix
-        if (Helix) {
-            (xL_s_d, vL_s_d, aL_s_d) = HelixTrajectory(Time.time);
-        }
+        // if (Helix) {
+        //     (xL_s_d, vL_s_d, aL_s_d, b1d_d) = HelixTrajectory(Time.time);
+        // }
 
         // Logging
         if (LogTrajectory) {
@@ -329,6 +330,10 @@ public class DroneLoadController: MonoBehaviour
         }
 
         Vector<double> b1d = DenseVector.OfArray(new double[] { Math.Sqrt(2)/2, -Math.Sqrt(2)/2, 0 });
+        if (Helix) {
+            (xL_s_d, vL_s_d, aL_s_d, b1d_d) = HelixTrajectory(Time.time);
+            b1d = b1d_d;
+        }
 
         // Load position controller
         Vector<double> ex = xL_s - xL_s_d;
@@ -410,6 +415,7 @@ public class DroneLoadController: MonoBehaviour
         Vector<double> x_s_d;
         Vector<double> v_s_d;
         Vector<double> a_s_d;
+        Vector<double> b1d_d;
         (x_s_d, v_s_d, a_s_d) = TrackingTargetTrajectory(TrackingTargetTF.position.To<ENU>().ToDense(), x_s, v_s);
 
         // Figure 8
@@ -419,7 +425,7 @@ public class DroneLoadController: MonoBehaviour
 
         // Figure 8
         if (Helix) {
-            (x_s_d, v_s_d, a_s_d) = HelixTrajectory(Time.time);
+            (x_s_d, v_s_d, a_s_d, b1d_d) = HelixTrajectory(Time.time);
         }
 
         // Minum snap trajectory parameters 
@@ -694,7 +700,7 @@ public class DroneLoadController: MonoBehaviour
         return (x_s_d, v_s_d, a_s_d);
     }
 
-    (Vector<double>, Vector<double>, Vector<double>) HelixTrajectory(double t) {
+    (Vector<double>, Vector<double>, Vector<double>, Vector<double>) HelixTrajectory(double t) {
         double t_max = 1;
         double A = 0.4;
         double B = 0.4;
@@ -705,7 +711,8 @@ public class DroneLoadController: MonoBehaviour
         Vector<double> v_s_d = DenseVector.OfArray(new double[] { A,   B*freq*Math.Cos(freq*t),      -C*freq*Math.Sin(freq*t) });
         Vector<double> a_s_d = DenseVector.OfArray(new double[] { 0,  -B*freq*freq*Math.Sin(freq*t), -C*freq*freq*Math.Cos(freq*t)});
 
-        return (x_s_d, v_s_d, a_s_d);
+        Vector<double> b1d_d = DenseVector.OfArray(new double[] { Math.Cos(freq*t), Math.Sin(freq*t), 0 });
+        return (x_s_d, v_s_d, a_s_d, b1d_d);
     }
 
     static Vector<double> _Cross(Vector<double> a, Vector<double> b) 
