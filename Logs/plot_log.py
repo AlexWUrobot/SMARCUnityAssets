@@ -17,16 +17,19 @@ plt.figure(1)
 plt.subplot(3, 1, 1)
 plt.plot(t, x_s1, label='x_s1')
 plt.plot(t, x_s_d1, label='x_s_d1')
+plt.ylabel("x-axis meter")
 plt.legend()
 
 plt.subplot(3, 1, 2)
 plt.plot(t, x_s2, label='x_s2')
 plt.plot(t, x_s_d2, label='x_s_d2')
+plt.ylabel("y-axis meter")
 plt.legend()
 
 plt.subplot(3, 1, 3)
 plt.plot(t, x_s3, label='x_s3')
 plt.plot(t, x_s_d3, label='x_s_d3')
+plt.ylabel("z-axis meter")
 plt.legend()
 
 

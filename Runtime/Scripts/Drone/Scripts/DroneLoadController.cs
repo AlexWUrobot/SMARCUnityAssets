@@ -44,6 +44,8 @@ public class DroneLoadController: MonoBehaviour
     public bool AttackTheBuoy = false;
     public bool Figure8 = false;
     public bool LogTrajectory = false;
+    public bool Helix = false;
+    
 
 	Propeller[] propellers;
     float[] propellers_rpms;
@@ -314,6 +316,11 @@ public class DroneLoadController: MonoBehaviour
             (xL_s_d, vL_s_d, aL_s_d) = Figure8Trajectory(Time.time);
         }
 
+        // Helix
+        if (Helix) {
+            (xL_s_d, vL_s_d, aL_s_d) = HelixTrajectory(Time.time);
+        }
+
         // Logging
         if (LogTrajectory) {
             tw = new StreamWriter(filePath, true);
@@ -408,6 +415,11 @@ public class DroneLoadController: MonoBehaviour
         // Figure 8
         if (Figure8) {
             (x_s_d, v_s_d, a_s_d) = Figure8Trajectory(Time.time);
+        }
+
+        // Figure 8
+        if (Helix) {
+            (x_s_d, v_s_d, a_s_d) = HelixTrajectory(Time.time);
         }
 
         // Minum snap trajectory parameters 
@@ -678,6 +690,20 @@ public class DroneLoadController: MonoBehaviour
         Vector<double> x_s_d = DenseVector.OfArray(new double[] { A*Math.Sin(freq*t), B*Math.Sin(2*freq*t), 0.5*Math.Sin(freq*t) + 1.5 });
         Vector<double> v_s_d = DenseVector.OfArray(new double[] { A*freq*Math.Cos(freq*t), 2*B*freq*Math.Cos(2*freq*t), 0.5*freq*Math.Cos(freq*t) });
         Vector<double> a_s_d = DenseVector.OfArray(new double[] { -A*freq*freq*Math.Sin(freq*t), -4*B*freq*freq*Math.Sin(2*freq*t), -0.5*freq*freq*Math.Sin(freq*t) });
+
+        return (x_s_d, v_s_d, a_s_d);
+    }
+
+    (Vector<double>, Vector<double>, Vector<double>) HelixTrajectory(double t) {
+        double t_max = 1;
+        double A = 0.4;
+        double B = 0.4;
+        double C = 0.6;
+        double freq = Math.PI / t_max;
+
+        Vector<double> x_s_d = DenseVector.OfArray(new double[] { A*t, B*Math.Sin(freq*t),            C*Math.Cos(freq*t)});
+        Vector<double> v_s_d = DenseVector.OfArray(new double[] { A,   B*freq*Math.Cos(freq*t),      -C*freq*Math.Sin(freq*t) });
+        Vector<double> a_s_d = DenseVector.OfArray(new double[] { 0,  -B*freq*freq*Math.Sin(freq*t), -C*freq*freq*Math.Cos(freq*t)});
 
         return (x_s_d, v_s_d, a_s_d);
     }
