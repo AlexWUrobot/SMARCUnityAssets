@@ -22,6 +22,14 @@ rollRad = df['rollRad']
 pitchRad = df['pitchRad']
 yawRad = df['yawRad']
 
+v_s1 = df['v_s1']
+v_s2 = df['v_s2']
+v_s3 = df['v_s3']
+v_s_d1 = df['v_s_d1']
+v_s_d2 = df['v_s_d2']
+v_s_d3 = df['v_s_d3']
+
+
 plt.figure(1)
 plt.subplot(3, 1, 1)
 plt.plot(t, x_s1, label='x_s1')
@@ -96,4 +104,26 @@ plt.subplot(3, 1, 3)
 plt.plot(t, yawRad, label='yawRad')
 plt.ylabel("Rad")
 plt.legend()
+
+
+plt.figure(5)
+plt.subplot(3, 1, 1)
+plt.plot(t, v_s1, label='v_x')
+plt.plot(t, v_s_d1, label='desired_v_x')
+plt.ylabel("x-axis meter/sec")
+plt.legend()
+
+plt.subplot(3, 1, 2)
+plt.plot(t, v_s2, label='v_y')
+plt.plot(t, v_s_d2, label='desired_v_y')
+plt.ylabel("y-axis meter/sec")
+plt.legend()
+
+plt.subplot(3, 1, 3)
+plt.plot(t, v_s3, label='v_z')
+plt.plot(t, v_s_d3, label='desired_v_z')
+plt.ylabel("z-axis meter/sec")
+plt.legend()
+
+
 plt.show()
