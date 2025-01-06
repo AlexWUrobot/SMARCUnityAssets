@@ -12,6 +12,7 @@ using Rope;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 
+using System.Linq;
 public class DroneLoadController: MonoBehaviour 
 {
     [Header("Basics")]
@@ -610,7 +611,52 @@ public class DroneLoadController: MonoBehaviour
 
 	void ApplyRPMs() 
     {
-        Debug.Log($"RPM: {propellers_rpms[0]:F2},{propellers_rpms[1]:F2},{propellers_rpms[2]:F2},{propellers_rpms[3]:F2}"); // desired position
+        //Debug.Log($"RPM: {propellers_rpms[0]:F2},{propellers_rpms[1]:F2},{propellers_rpms[2]:F2},{propellers_rpms[3]:F2}"); // desired position
+
+        //Debug.Log($"AUV: {LoadLinkTF.position[0]:F2},{LoadLinkTF.position[1]:F2},{LoadLinkTF.position[2]:F2}"); // 0, 0.04, 0.65
+
+        Vector<double> x_s = BaseLink.transform.position.To<ENU>().ToDense();
+        Debug.Log($"UAV: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}");    // -0.06, 2.94, 1.96
+
+        //x_s = Rope.GetChild(Rope.childCount-1).position.To<ENU>().ToDense();
+        //Debug.Log($"RopeCount: {Rope.childCount}");
+        //Debug.Log($"Rope: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}");    // 0, 2.75, 0
+        x_s = Rope.GetChild(7).position.To<ENU>().ToDense();
+        Debug.Log($"Rope10: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}");    // 0, 1.65, 0     // 0, 0.65, 0
+
+         // Rope has 20 child objects
+        int numPoints = Rope.childCount;
+        double[,] points = new double[numPoints, 3]; // 20 rows (points) and 3 columns (x, y, z)
+        for (int i = 0; i < numPoints; i++)
+        {
+            // Get the position of the current child
+            var position = Rope.GetChild(i).position.To<ENU>().ToDense();
+
+            // Extract x, y, and z coordinates
+            points[i, 0] = position[0];
+            points[i, 1] = position[1];
+            points[i, 2] = position[2];
+        }       
+
+        // Quadrotor roll pitch yaw
+        Quaternion orientation = BaseLink.transform.rotation;
+        Vector3 eulerENU = orientation.eulerAngles;
+
+        double roll = eulerENU.x;
+        double pitch = eulerENU.y;
+        double yaw = eulerENU.z;
+
+        // UAV attitude
+        double[] directionsScaled = {roll, pitch, yaw};      // 0,  45 , 0
+        
+        //Debug.Log($"UAV : {x_s[0]:F2}, {x_s[1]:F2}, {x_s[2]:F2}");
+        //Debug.Log($"eulerENU : {roll:F2}, {pitch:F2}, {yaw:F2}");
+        //Debug.Log($"points : {numPoints}");
+        int insideCount = WindCheck.PointsInsideTrapezoid(points, directionsScaled, x_s[0], x_s[1], x_s[2]);
+        Debug.Log($"Number of points inside the trapezoid: {insideCount}");
+
+
+
         for (int i = 0; i < propellers.Length; i++) {
             // Now, all props should always have positive rpms, but just in case...
             if (propellers_rpms[i] < 0) {
@@ -840,6 +886,199 @@ public static class MinimumSnapTrajectory
         {
             result += i * (i - 1) * coeffs[i] * Math.Pow(t, i - 2);
         }
+        return result;
+    }
+}
+
+
+
+// Examine the impact of the UAV's downward airflow on the rope
+// Usage: 
+        // Rope Locations
+
+        // double[,] points = {
+        //     { 1, 0, 0 },
+        //     { 3, 0, 7 },
+        //     { 0, 0, 20 },
+        //     { -1, -1, 5 }
+        // };
+
+        // double[] directionsScaled = { 1, 0, 0 };       // UAV attitude
+        // double x = 0, y = 0, z = 0;                    // UAV position     
+
+        // int insideCount = WindCheck.PointsInsideTrapezoid(points, directionsScaled, x, y, z);
+        // Console.WriteLine($"Number of points inside the trapezoid: {insideCount}");
+
+public static class WindCheck
+{
+    public static int PointsInsideTrapezoid(double[,] points, double[] directionsScaled, double x, double y, double z)
+    {
+        double r = 2;    // UAV's downward airflow range is assumed as a trapezoid
+        double R = 5;
+        double h = 5;
+        // int thetaResolution = 25;
+
+        // // Create theta array
+        // double[] theta = Enumerable.Range(0, thetaResolution)
+        //                            .Select(i => 2 * Math.PI * i / (thetaResolution - 1))
+        //                            .ToArray();
+
+        // Normalize the direction vector
+        double[] v = NormalizeVector(directionsScaled);
+        double[] v0 = { 0, 0, 1 }; // Original direction (along x-axis)
+
+        // Calculate the axis of rotation
+        double[] axisOfRotation = NormalizeVector(CrossProduct(v0, v));
+
+        // Calculate the angle of rotation
+        double angleOfRotation = Math.Acos(DotProduct(v0, v));
+
+        // Rotation matrix using Rodrigues' rotation formula
+        double[,] K = {
+            { 0, -axisOfRotation[2], axisOfRotation[1] },
+            { axisOfRotation[2], 0, -axisOfRotation[0] },
+            { -axisOfRotation[1], axisOfRotation[0], 0 }
+        };
+
+        double[,] RMatrix = AddMatrices(
+            IdentityMatrix(3),
+            MultiplyMatrixByScalar(K, Math.Sin(angleOfRotation)),
+            MultiplyMatrixByScalar(PowerMatrix(K, 2), 1 - Math.Cos(angleOfRotation))
+        );
+
+        // Circle centers
+        double[] circle2Center = AddVectors(
+            MultiplyMatrixByVector(RMatrix, new double[] { h, 0, 0 }),
+            new double[] { x, y, z }
+        );
+
+        double[] vectorBetweenCircles = MultiplyMatrixByVector(RMatrix, new double[] { h, 0, 0 });
+        double[] vectorNorm = NormalizeVector(vectorBetweenCircles);
+
+        // Check points
+        int count = 0;
+        for (int i = 0; i < points.GetLength(0); i++)
+        {
+            double[] point = { points[i, 0], points[i, 1], points[i, 2] };
+
+            double[] relativePoint = SubtractVectors(point, new double[] { x, y, z });
+            double projection = DotProduct(relativePoint, vectorNorm);
+
+            if (projection < 0 || projection > h)
+                continue;
+
+            double interpolatedRadius = r + (R - r) * (projection / h);
+
+            double distanceToAxis = Norm(CrossProduct(relativePoint, vectorNorm)) / Norm(vectorNorm);
+
+            if (distanceToAxis <= interpolatedRadius)
+                count++;
+        }
+
+        return count;
+    }
+
+    // Utility Functions
+    private static double[] NormalizeVector(double[] v)
+    {
+        double norm = Math.Sqrt(v.Sum(x => x * x));
+        return v.Select(x => x / norm).ToArray();
+    }
+
+    private static double[] CrossProduct(double[] u, double[] v)
+    {
+        return new double[]
+        {
+            u[1] * v[2] - u[2] * v[1],
+            u[2] * v[0] - u[0] * v[2],
+            u[0] * v[1] - u[1] * v[0]
+        };
+    }
+
+    private static double DotProduct(double[] u, double[] v)
+    {
+        return u.Zip(v, (a, b) => a * b).Sum();
+    }
+
+    private static double[,] IdentityMatrix(int size)
+    {
+        double[,] identity = new double[size, size];
+        for (int i = 0; i < size; i++) identity[i, i] = 1;
+        return identity;
+    }
+
+    private static double[,] AddMatrices(params double[][,] matrices)
+    {
+        int rows = matrices[0].GetLength(0), cols = matrices[0].GetLength(1);
+        double[,] result = new double[rows, cols];
+
+        foreach (var matrix in matrices)
+            for (int i = 0; i < rows; i++)
+                for (int j = 0; j < cols; j++)
+                    result[i, j] += matrix[i, j];
+
+        return result;
+    }
+
+    private static double[,] MultiplyMatrixByScalar(double[,] matrix, double scalar)
+    {
+        int rows = matrix.GetLength(0), cols = matrix.GetLength(1);
+        double[,] result = new double[rows, cols];
+
+        for (int i = 0; i < rows; i++)
+            for (int j = 0; j < cols; j++)
+                result[i, j] = matrix[i, j] * scalar;
+
+        return result;
+    }
+
+    private static double[] MultiplyMatrixByVector(double[,] matrix, double[] vector)
+    {
+        int rows = matrix.GetLength(0), cols = matrix.GetLength(1);
+        double[] result = new double[rows];
+
+        for (int i = 0; i < rows; i++)
+            for (int j = 0; j < cols; j++)
+                result[i] += matrix[i, j] * vector[j];
+
+        return result;
+    }
+
+    private static double[] SubtractVectors(double[] u, double[] v)
+    {
+        return u.Zip(v, (a, b) => a - b).ToArray();
+    }
+
+    private static double[] AddVectors(double[] u, double[] v)
+    {
+        return u.Zip(v, (a, b) => a + b).ToArray();
+    }
+
+    private static double Norm(double[] v)
+    {
+        return Math.Sqrt(v.Sum(x => x * x));
+    }
+
+    private static double[,] PowerMatrix(double[,] matrix, int power)
+    {
+        double[,] result = IdentityMatrix(matrix.GetLength(0));
+        for (int i = 0; i < power; i++)
+        {
+            result = MultiplyMatrices(result, matrix);
+        }
+        return result;
+    }
+
+    private static double[,] MultiplyMatrices(double[,] a, double[,] b)
+    {
+        int rowsA = a.GetLength(0), colsA = a.GetLength(1), colsB = b.GetLength(1);
+        double[,] result = new double[rowsA, colsB];
+
+        for (int i = 0; i < rowsA; i++)
+            for (int j = 0; j < colsB; j++)
+                for (int k = 0; k < colsA; k++)
+                    result[i, j] += a[i, k] * b[k, j];
+
         return result;
     }
 }
