@@ -98,6 +98,16 @@ public class DroneLoadController: MonoBehaviour
     double[] coeffsZ = new double[6];
     int min_snap_flag;
     double catching_time; 
+    
+    // Downward air flow
+
+    // public float smallRadius = 0.5f;
+    // public float largeRadius = 0.5f;
+    // public float height = 0.5f;
+
+    private LineRenderer lineRenderer;
+
+
 
     // Logging
     string filePath = Application.dataPath + "/../../SMARCUnityAssets/Logs/log.csv";
@@ -149,6 +159,15 @@ public class DroneLoadController: MonoBehaviour
                 mL += sam_ab.mass;
             }
         }
+
+        // Plot downward airflow
+        lineRenderer = gameObject.AddComponent<LineRenderer>();
+        lineRenderer.startWidth = 0.05f;
+        lineRenderer.endWidth = 0.05f;
+        lineRenderer.positionCount = 0;
+
+
+
         // Rope length l is calculated dynamically
         /////////////////////////////////////////////////////
 
@@ -628,8 +647,8 @@ public class DroneLoadController: MonoBehaviour
         //x_s = Rope.GetChild(Rope.childCount-1).position.To<ENU>().ToDense();
         //Debug.Log($"RopeCount: {Rope.childCount}");
         //Debug.Log($"Rope: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}");    // 0, 2.75, 0
-        x_s = Rope.GetChild(7).position.To<ENU>().ToDense();
-        Debug.Log($"Rope10: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}");    // 0, 1.65, 0     // 0, 0.65, 0
+        //x_s = Rope.GetChild(7).position.To<ENU>().ToDense();
+        //Debug.Log($"Rope10: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}");    // 0, 1.65, 0     // 0, 0.65, 0
 
          // Rope has 20 child objects
         int numPoints = Rope.childCount;
@@ -654,14 +673,28 @@ public class DroneLoadController: MonoBehaviour
         double yaw = eulerENU.z;
 
         // UAV attitude
-        double[] directionsScaled = {roll, pitch, yaw};      // 0,  45 , 0
+        // double[] directionsScaled = {roll, pitch, yaw};      // 0,  45 , 0
+        //double[] directionsScaled = {eulerENU.x, eulerENU.z, eulerENU.y};      // 0,  45 , 0
+        // double[] directionsScaled = {1, 0, 0}; 
+        double[] directionsScaled = {eulerENU.y, eulerENU.z, eulerENU.x};  
         
         //Debug.Log($"UAV : {x_s[0]:F2}, {x_s[1]:F2}, {x_s[2]:F2}");
         //Debug.Log($"eulerENU : {roll:F2}, {pitch:F2}, {yaw:F2}");
         //Debug.Log($"points : {numPoints}");
-        int insideCount = WindCheck.PointsInsideTrapezoid(points, directionsScaled, x_s[0], x_s[1], x_s[2]);
-        rope_insideWindCount = insideCount;        
-        Debug.Log($"Number of points inside the trapezoid: {insideCount}");
+        
+        //int insideCount = WindCheck.PointsInsideTrapezoid(points, directionsScaled, x_s[0], x_s[1], x_s[2]);
+        //rope_insideWindCount = insideCount;        
+        //Debug.Log($"Number of points inside the trapezoid: {insideCount}");
+
+        // Plot downward windflow to exam 
+
+        Vector3[] vectorPoints = ConvertToVector3Array(points);
+        Vector3 vectorDirectionScaled = ConvertToVector3(directionsScaled);
+        Vector3 UAV_position = ConvertVectorToVector3(x_s);
+        // int PointsInsideTrapezoid(Vector3[] points, Vector3 directionScaled, Vector3 center)
+
+        int insideCount2 = PointsInsideTrapezoid(vectorPoints,vectorDirectionScaled,UAV_position);
+        Debug.Log($"2 Number of points inside the trapezoid: {insideCount2}");
 
 
 
@@ -833,6 +866,132 @@ public class DroneLoadController: MonoBehaviour
     {
         return new Vector3((float)v[0], (float)v[2], (float)v[1]);
     }
+
+    Vector3[] ConvertToVector3Array(double[,] doublePoints)
+    {
+        // Get the number of rows (outer dimension) of the double array
+        int rowCount = doublePoints.GetLength(0);
+
+        // Initialize the Vector3 array
+        Vector3[] vectorPoints = new Vector3[rowCount];
+
+        // Iterate through the rows and populate the Vector3 array
+        for (int i = 0; i < rowCount; i++)
+        {
+            vectorPoints[i] = new Vector3(
+                (float)doublePoints[i, 0], // Convert x to float
+                (float)doublePoints[i, 1], // Convert y to float
+                (float)doublePoints[i, 2]  // Convert z to float
+            );
+        }
+
+        return vectorPoints;
+    }
+
+    Vector3 ConvertToVector3(double[] directionsScaled)
+    {
+        // Ensure the array has exactly 3 elements
+        if (directionsScaled.Length != 3)
+        {
+            Debug.LogError("The double[] array must have exactly 3 elements to convert to a Vector3.");
+            return Vector3.zero;
+        }
+
+        // Convert to Vector3
+        return new Vector3(
+            (float)directionsScaled[0], // x
+            (float)directionsScaled[1], // y
+            (float)directionsScaled[2]  // z
+        );
+    }
+
+    Vector3 ConvertVectorToVector3(Vector<double> vectorDouble)
+    {
+        // Ensure the vector has exactly 3 elements
+        if (vectorDouble.Count != 3)
+        {
+            Debug.LogError("The Vector<double> must have exactly 3 elements to convert to a Vector3.");
+            return Vector3.zero;
+        }
+
+        // Convert to Vector3
+        return new Vector3(
+            (float)vectorDouble[0], // x
+            (float)vectorDouble[2], // y
+            (float)vectorDouble[1]  // z
+        );
+    }
+
+
+    int PointsInsideTrapezoid(Vector3[] points, Vector3 directionScaled, Vector3 center)
+    {
+        float smallRadius = 2.5f;
+        float largeRadius = 2.5f;
+        float height = 2.5f;
+        
+        Vector3 v = directionScaled.normalized;
+        //Vector3 v0 = Vector3.forward; // Original direction
+        Vector3 v0 = Vector3.up; // Original direction
+
+        Vector3 axisOfRotation = Vector3.Cross(v0, v).normalized;
+        float angleOfRotation = Mathf.Acos(Vector3.Dot(v0, v));
+
+        Quaternion rotation = Quaternion.AngleAxis(Mathf.Rad2Deg * angleOfRotation, axisOfRotation);
+
+        List<Vector3> smallCircle = new List<Vector3>();
+        List<Vector3> largeCircle = new List<Vector3>();
+
+        for (int i = 0; i < 25; i++)
+        {
+            float theta = Mathf.PI * 2 * i / 25;
+            Vector3 smallPoint = rotation * new Vector3(0, smallRadius * Mathf.Cos(theta), smallRadius * Mathf.Sin(theta));
+            Vector3 largePoint = rotation * new Vector3(height, largeRadius * Mathf.Cos(theta), largeRadius * Mathf.Sin(theta));
+
+            smallCircle.Add(smallPoint + center);
+            largeCircle.Add(largePoint + center);
+        }
+
+        DrawTrapezoid(smallCircle, largeCircle);
+
+        int count = 0;
+        Vector3 vectorBetweenCircles = rotation * new Vector3(height, 0, 0);
+        Vector3 unitVectorBetweenCircles = vectorBetweenCircles.normalized;
+
+        foreach (Vector3 point in points)
+        {
+            Vector3 relativePoint = point - center;
+            float projection = Vector3.Dot(relativePoint, unitVectorBetweenCircles);
+
+            if (projection < 0 || projection > height)
+                continue;
+
+            float interpolatedRadius = Mathf.Lerp(smallRadius, largeRadius, projection / height);
+            float distanceToAxis = Vector3.Cross(relativePoint, unitVectorBetweenCircles).magnitude;
+
+            if (distanceToAxis <= interpolatedRadius)
+                count++;
+        }
+
+        return count;
+    }
+
+
+    void DrawTrapezoid(List<Vector3> smallCircle, List<Vector3> largeCircle)
+    {
+        // for (int i = 0; i < smallCircle.Count; i++)
+        // {
+        //     Vector3 start = smallCircle[i];
+        //     Vector3 end = largeCircle[i];
+        //     Debug.DrawLine(start, end, Color.cyan, 1f);
+        // }
+
+        for (int i = 0; i < smallCircle.Count - 1; i++)
+        {
+            Debug.DrawLine(smallCircle[i], smallCircle[i + 1], Color.blue, 1f);
+            Debug.DrawLine(largeCircle[i], largeCircle[i + 1], Color.green, 1f);
+        }
+    }
+
 }
 
 
@@ -923,7 +1082,7 @@ public static class WindCheck
     {
         double r = 2;    // UAV's downward airflow range is assumed as a trapezoid
         double R = 5;
-        double h = 5;
+        double h = 1;
         // int thetaResolution = 25;
 
         // // Create theta array
@@ -985,6 +1144,77 @@ public static class WindCheck
 
         return count;
     }
+
+
+    // private static void DrawTrapezoid(double[] directionsScaled, double x, double y, double z)
+    // {
+    //     //
+    //     double r = 2;    // UAV's downward airflow range is assumed as a trapezoid
+    //     double R = 5;
+    //     double h = 5;
+    //     double[] center = new double[] { x, y, z };  // circle 1
+
+    //     // Normalize the direction vector
+    //     double[] v = NormalizeVector(directionsScaled);
+    //     Vector3 v0 = Vector3.forward; // Default direction
+    //     Vector3 axisOfRotation = Vector3.Cross(v0, v).normalized;
+    //     float angleOfRotation = Mathf.Acos(Vector3.Dot(v0, v)) * Mathf.Rad2Deg;
+
+    //     // Create rotation matrix (as Quaternion)
+    //     Quaternion rotation = Quaternion.AngleAxis(angleOfRotation, axisOfRotation);
+
+    //     // Generate circle points
+    //     List<Vector3> circle1 = GenerateCircle(center, r, rotation, segments);
+    //     List<Vector3> circle2 = GenerateCircle(center + h * v, R, rotation, segments);
+
+    //     // Draw circles
+    //     DrawCircle(circle1, Color.blue);
+    //     DrawCircle(circle2, Color.green);
+
+    //     // Connect circles
+    //     for (int i = 0; i < segments; i++)
+    //     {
+    //         Vector3 start = circle1[i];
+    //         Vector3 end = circle2[i];
+    //         DrawLine(start, end, Color.cyan);
+    //     }
+    // }
+
+    // private static List<Vector3> GenerateCircle(Vector3 center, float radius, Quaternion rotation, int segments)
+    // {
+    //     List<Vector3> points = new List<Vector3>();
+    //     for (int i = 0; i < segments; i++)
+    //     {
+    //         float angle = i * Mathf.PI * 2 / segments;
+    //         Vector3 localPoint = new Vector3(0, radius * Mathf.Cos(angle), radius * Mathf.Sin(angle));
+    //         points.Add(center + rotation * localPoint);
+    //     }
+    //     return points;
+    // }
+
+    // private static void DrawCircle(List<Vector3> circlePoints, Color color)
+    // {
+    //     for (int i = 0; i < circlePoints.Count; i++)
+    //     {
+    //         Vector3 start = circlePoints[i];
+    //         Vector3 end = circlePoints[(i + 1) % circlePoints.Count];
+    //         DrawLine(start, end, color);
+    //     }
+    // }
+
+    // private static void DrawLine(Vector3 start, Vector3 end, Color color)
+    // {
+    //     GameObject line = new GameObject("Line");
+    //     LineRenderer lr = line.AddComponent<LineRenderer>();
+    //     lr.positionCount = 2;
+    //     lr.SetPosition(0, start);
+    //     lr.SetPosition(1, end);
+    //     lr.startWidth = 0.05f;
+    //     lr.endWidth = 0.05f;
+    //     lr.material = lineMaterial;
+    //     lr.startColor = color;
+    //     lr.endColor = color;
+    // }
 
     // Utility Functions
     private static double[] NormalizeVector(double[] v)
@@ -1090,3 +1320,101 @@ public static class WindCheck
         return result;
     }
 }
+
+
+// public class TrapezoidPlot : MonoBehaviour
+// {
+//     public Vector3[] points;
+//     public Vector3 directionsScaled;
+//     public Vector3 trapezoidCenter;
+
+//     public float smallRadius = 2f;
+//     public float largeRadius = 5f;
+//     public float height = 15f;
+
+//     private LineRenderer lineRenderer;
+//     private int insideCount;
+
+//     void Start()
+//     {
+//         lineRenderer = gameObject.AddComponent<LineRenderer>();
+//         lineRenderer.startWidth = 0.05f;
+//         lineRenderer.endWidth = 0.05f;
+//         lineRenderer.positionCount = 0;
+
+//         insideCount = PointsInsideTrapezoid(points, directionsScaled, trapezoidCenter);
+//         Debug.Log($"Number of points inside the trapezoid: {insideCount}");
+//     }
+
+//     int PointsInsideTrapezoid(Vector3[] points, Vector3 directionScaled, Vector3 center)
+//     {
+//         Vector3 v = directionScaled.normalized;
+//         Vector3 v0 = Vector3.forward; // Original direction
+
+//         Vector3 axisOfRotation = Vector3.Cross(v0, v).normalized;
+//         float angleOfRotation = Mathf.Acos(Vector3.Dot(v0, v));
+
+//         Quaternion rotation = Quaternion.AngleAxis(Mathf.Rad2Deg * angleOfRotation, axisOfRotation);
+
+//         List<Vector3> smallCircle = new List<Vector3>();
+//         List<Vector3> largeCircle = new List<Vector3>();
+
+//         for (int i = 0; i < 25; i++)
+//         {
+//             float theta = Mathf.PI * 2 * i / 25;
+//             Vector3 smallPoint = rotation * new Vector3(0, smallRadius * Mathf.Cos(theta), smallRadius * Mathf.Sin(theta));
+//             Vector3 largePoint = rotation * new Vector3(height, largeRadius * Mathf.Cos(theta), largeRadius * Mathf.Sin(theta));
+
+//             smallCircle.Add(smallPoint + center);
+//             largeCircle.Add(largePoint + center);
+//         }
+
+//         DrawTrapezoid(smallCircle, largeCircle);
+
+//         int count = 0;
+//         Vector3 vectorBetweenCircles = rotation * new Vector3(height, 0, 0);
+//         Vector3 unitVectorBetweenCircles = vectorBetweenCircles.normalized;
+
+//         foreach (Vector3 point in points)
+//         {
+//             Vector3 relativePoint = point - center;
+//             float projection = Vector3.Dot(relativePoint, unitVectorBetweenCircles);
+
+//             if (projection < 0 || projection > height)
+//                 continue;
+
+//             float interpolatedRadius = Mathf.Lerp(smallRadius, largeRadius, projection / height);
+//             float distanceToAxis = Vector3.Cross(relativePoint, unitVectorBetweenCircles).magnitude;
+
+//             if (distanceToAxis <= interpolatedRadius)
+//                 count++;
+//         }
+
+//         return count;
+//     }
+
+//     void DrawTrapezoid(List<Vector3> smallCircle, List<Vector3> largeCircle)
+//     {
+//         for (int i = 0; i < smallCircle.Count; i++)
+//         {
+//             Vector3 start = smallCircle[i];
+//             Vector3 end = largeCircle[i];
+//             Debug.DrawLine(start, end, Color.cyan, 100f);
+//         }
+
+//         for (int i = 0; i < smallCircle.Count - 1; i++)
+//         {
+//             Debug.DrawLine(smallCircle[i], smallCircle[i + 1], Color.blue, 100f);
+//             Debug.DrawLine(largeCircle[i], largeCircle[i + 1], Color.green, 100f);
+//         }
+//     }
+
+//     void OnDrawGizmos()
+//     {
+//         Gizmos.color = Color.red;
+//         foreach (var point in points)
+//         {
+//             Gizmos.DrawSphere(point, 0.1f);
+//         }
+//     }
+// }
