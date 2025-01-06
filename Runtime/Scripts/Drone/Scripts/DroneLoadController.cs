@@ -676,8 +676,12 @@ public class DroneLoadController: MonoBehaviour
         // double[] directionsScaled = {roll, pitch, yaw};      // 0,  45 , 0
         //double[] directionsScaled = {eulerENU.x, eulerENU.z, eulerENU.y};      // 0,  45 , 0
         // double[] directionsScaled = {1, 0, 0}; 
-        // double[] directionsScaled = {eulerENU.y, eulerENU.z, eulerENU.x};  
-        Vector3 vectorDirectioinScaled = orientation * Vector3.forward; 
+        // double[] directionsScaled = {eulerENU.y, eulerENU.z, eulerENU.x}; 
+
+        //Quaternion adjustToXZPlane = Quaternion.Euler(90, 0, 0); // 90 degrees rotation around the X-axis 
+        //Vector3 vectorDirectionScaled = orientation * adjustToXZPlane * Vector3.up; 
+
+        Vector3 vectorDirectionScaled = orientation * Vector3.up; 
 
         //Debug.Log($"UAV : {x_s[0]:F2}, {x_s[1]:F2}, {x_s[2]:F2}");
         //Debug.Log($"eulerENU : {roll:F2}, {pitch:F2}, {yaw:F2}");
@@ -696,10 +700,11 @@ public class DroneLoadController: MonoBehaviour
         Vector3 UAV_position = ConvertVectorToVector3(x_s);
         // int PointsInsideTrapezoid(Vector3[] points, Vector3 directionScaled, Vector3 center)
 
-        int insideCount2 = PointsInsideTrapezoid(vectorPoints,vectorDirectioinScaled,UAV_position);
+        int insideCount2 = PointsInsideTrapezoid(vectorPoints,vectorDirectionScaled,UAV_position);
+        rope_insideWindCount = insideCount2; 
         Debug.Log($"2 Number of points inside the trapezoid: {insideCount2}");
 
-
+        //Debug.DrawLine(UAV_position, UAV_position + vectorDirectionScaled * 5, Color.red, 2f);
 
         for (int i = 0; i < propellers.Length; i++) {
             // Now, all props should always have positive rpms, but just in case...
@@ -928,13 +933,13 @@ public class DroneLoadController: MonoBehaviour
 
     int PointsInsideTrapezoid(Vector3[] points, Vector3 directionScaled, Vector3 center)
     {
-        float smallRadius = 1.0f;
-        float largeRadius = 2.0f;
+        float smallRadius = 0.3f;
+        float largeRadius = 1.0f;
         float height = 2.5f;
         
         Vector3 v = directionScaled.normalized;
         //Vector3 v0 = Vector3.forward; // Original direction
-        Vector3 v0 = Vector3.up; // Original direction
+        Vector3 v0 = -1*Vector3.right; // Original direction
 
         Vector3 axisOfRotation = Vector3.Cross(v0, v).normalized;
         //float angleOfRotation = Mathf.Acos(Vector3.Dot(v0, v));
