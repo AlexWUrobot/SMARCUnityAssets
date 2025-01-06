@@ -429,9 +429,14 @@ public class DroneLoadController: MonoBehaviour
         double pitch = eulerENU.y;
         double yaw = eulerENU.z;
 
-        double rollRad = Mathf.Deg2Rad * roll;
-        double pitchRad = Mathf.Deg2Rad * pitch;
-        double yawRad = Mathf.Deg2Rad * yaw;
+        double rollRad = roll;
+        double pitchRad = pitch;
+        double yawRad = yaw;
+
+        // Rad
+        // double rollRad = Mathf.Deg2Rad * roll;
+        // double pitchRad = Mathf.Deg2Rad * pitch;
+        // double yawRad = Mathf.Deg2Rad * yaw;
 
         // Figure 8
         if (Figure8) {
