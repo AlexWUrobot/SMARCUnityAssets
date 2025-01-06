@@ -106,7 +106,7 @@ public class DroneLoadController: MonoBehaviour
     // public float height = 0.5f;
 
     private LineRenderer lineRenderer;
-
+    public Vector3[] Gizmos_points;
 
 
     // Logging
@@ -689,6 +689,8 @@ public class DroneLoadController: MonoBehaviour
         // Plot downward windflow to exam 
 
         Vector3[] vectorPoints = ConvertToVector3Array(points);
+        Gizmos_points = vectorPoints;
+        
         Vector3 vectorDirectionScaled = ConvertToVector3(directionsScaled);
         Vector3 UAV_position = ConvertVectorToVector3(x_s);
         // int PointsInsideTrapezoid(Vector3[] points, Vector3 directionScaled, Vector3 center)
@@ -880,8 +882,8 @@ public class DroneLoadController: MonoBehaviour
         {
             vectorPoints[i] = new Vector3(
                 (float)doublePoints[i, 0], // Convert x to float
-                (float)doublePoints[i, 1], // Convert y to float
-                (float)doublePoints[i, 2]  // Convert z to float
+                (float)doublePoints[i, 2], // Convert y to float
+                (float)doublePoints[i, 1]  // Convert z to float
             );
         }
 
@@ -925,8 +927,8 @@ public class DroneLoadController: MonoBehaviour
 
     int PointsInsideTrapezoid(Vector3[] points, Vector3 directionScaled, Vector3 center)
     {
-        float smallRadius = 2.5f;
-        float largeRadius = 2.5f;
+        float smallRadius = 1.0f;
+        float largeRadius = 2.0f;
         float height = 2.5f;
         
         Vector3 v = directionScaled.normalized;
@@ -991,6 +993,17 @@ public class DroneLoadController: MonoBehaviour
             Debug.DrawLine(largeCircle[i], largeCircle[i + 1], Color.green, 1f);
         }
     }
+
+    // draw the rope points
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        foreach (var point in Gizmos_points)
+        {
+            Gizmos.DrawSphere(point, 0.1f);
+        }
+    }
+
 
 }
 
