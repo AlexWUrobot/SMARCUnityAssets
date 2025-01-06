@@ -676,8 +676,9 @@ public class DroneLoadController: MonoBehaviour
         // double[] directionsScaled = {roll, pitch, yaw};      // 0,  45 , 0
         //double[] directionsScaled = {eulerENU.x, eulerENU.z, eulerENU.y};      // 0,  45 , 0
         // double[] directionsScaled = {1, 0, 0}; 
-        double[] directionsScaled = {eulerENU.y, eulerENU.z, eulerENU.x};  
-        
+        // double[] directionsScaled = {eulerENU.y, eulerENU.z, eulerENU.x};  
+        Vector3 vectorDirectioinScaled = orientation * Vector3.forward; 
+
         //Debug.Log($"UAV : {x_s[0]:F2}, {x_s[1]:F2}, {x_s[2]:F2}");
         //Debug.Log($"eulerENU : {roll:F2}, {pitch:F2}, {yaw:F2}");
         //Debug.Log($"points : {numPoints}");
@@ -691,11 +692,11 @@ public class DroneLoadController: MonoBehaviour
         Vector3[] vectorPoints = ConvertToVector3Array(points);
         Gizmos_points = vectorPoints;
         
-        Vector3 vectorDirectionScaled = ConvertToVector3(directionsScaled);
+        //Vector3 vectorDirectionScaled = ConvertToVector3(directionsScaled);
         Vector3 UAV_position = ConvertVectorToVector3(x_s);
         // int PointsInsideTrapezoid(Vector3[] points, Vector3 directionScaled, Vector3 center)
 
-        int insideCount2 = PointsInsideTrapezoid(vectorPoints,vectorDirectionScaled,UAV_position);
+        int insideCount2 = PointsInsideTrapezoid(vectorPoints,vectorDirectioinScaled,UAV_position);
         Debug.Log($"2 Number of points inside the trapezoid: {insideCount2}");
 
 
@@ -936,7 +937,16 @@ public class DroneLoadController: MonoBehaviour
         Vector3 v0 = Vector3.up; // Original direction
 
         Vector3 axisOfRotation = Vector3.Cross(v0, v).normalized;
-        float angleOfRotation = Mathf.Acos(Vector3.Dot(v0, v));
+        //float angleOfRotation = Mathf.Acos(Vector3.Dot(v0, v));
+        float angleOfRotation = Mathf.Acos(Mathf.Clamp(Vector3.Dot(v0, v), -1f, 1f));
+        if (axisOfRotation == Vector3.zero)
+        {
+            axisOfRotation = Vector3.up; // Default axis when vectors are parallel
+        }
+        else
+        {
+            axisOfRotation.Normalize();
+        }
 
         Quaternion rotation = Quaternion.AngleAxis(Mathf.Rad2Deg * angleOfRotation, axisOfRotation);
 
@@ -995,14 +1005,14 @@ public class DroneLoadController: MonoBehaviour
     }
 
     // draw the rope points
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        foreach (var point in Gizmos_points)
-        {
-            Gizmos.DrawSphere(point, 0.1f);
-        }
-    }
+    // void OnDrawGizmos()
+    // {
+    //     Gizmos.color = Color.red;
+    //     foreach (var point in Gizmos_points)
+    //     {
+    //         Gizmos.DrawSphere(point, 0.1f);
+    //     }
+    // }
 
 
 }
