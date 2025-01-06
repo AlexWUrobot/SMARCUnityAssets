@@ -29,6 +29,9 @@ v_s_d1 = df['v_s_d1']
 v_s_d2 = df['v_s_d2']
 v_s_d3 = df['v_s_d3']
 
+insideCount = df['insideCount']
+
+########################################## Position
 
 plt.figure(1)
 plt.subplot(3, 1, 1)
@@ -67,7 +70,30 @@ plt.ylabel("meter")
 plt.xlabel("time")
 plt.legend()
 
+########################################## Velocity
+
 plt.figure(3)
+plt.subplot(3, 1, 1)
+plt.plot(t, v_s1, label='v_x')
+plt.plot(t, v_s_d1, label='desired_v_x')
+plt.ylabel("x-axis meter/sec")
+plt.legend()
+
+plt.subplot(3, 1, 2)
+plt.plot(t, v_s2, label='v_y')
+plt.plot(t, v_s_d2, label='desired_v_y')
+plt.ylabel("y-axis meter/sec")
+plt.legend()
+
+plt.subplot(3, 1, 3)
+plt.plot(t, v_s3, label='v_z')
+plt.plot(t, v_s_d3, label='desired_v_z')
+plt.ylabel("z-axis meter/sec")
+plt.legend()
+
+########################################## RPM
+
+plt.figure(4)
 plt.subplot(4, 1, 1)
 plt.plot(t, propellers_rpms1, label='rotor 1')
 plt.ylabel("rpm")
@@ -89,41 +115,31 @@ plt.ylabel("rpm")
 plt.xlabel("time")
 plt.legend()
 
-plt.figure(4)
-plt.subplot(3, 1, 1)
+########################################## Attitude and Wind
+
+plt.figure(5)
+plt.subplot(4, 1, 1)
 plt.plot(t, rollRad, label='rollRad')
 plt.ylabel("Rad")
 plt.legend()
 
-plt.subplot(3, 1, 2)
+plt.subplot(4, 1, 2)
 plt.plot(t, pitchRad, label='pitchRad')
 plt.ylabel("Rad")
 plt.legend()
 
-plt.subplot(3, 1, 3)
+plt.subplot(4, 1, 3)
 plt.plot(t, yawRad, label='yawRad')
 plt.ylabel("Rad")
 plt.legend()
 
-
-plt.figure(5)
-plt.subplot(3, 1, 1)
-plt.plot(t, v_s1, label='v_x')
-plt.plot(t, v_s_d1, label='desired_v_x')
-plt.ylabel("x-axis meter/sec")
+plt.subplot(4, 1, 4)
+plt.plot(t, insideCount, label='Rope inside wind')
+plt.ylabel("Count")
+plt.xlabel("time")
 plt.legend()
 
-plt.subplot(3, 1, 2)
-plt.plot(t, v_s2, label='v_y')
-plt.plot(t, v_s_d2, label='desired_v_y')
-plt.ylabel("y-axis meter/sec")
-plt.legend()
 
-plt.subplot(3, 1, 3)
-plt.plot(t, v_s3, label='v_z')
-plt.plot(t, v_s_d3, label='desired_v_z')
-plt.ylabel("z-axis meter/sec")
-plt.legend()
 
 
 plt.show()

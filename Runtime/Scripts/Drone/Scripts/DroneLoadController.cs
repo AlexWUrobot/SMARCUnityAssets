@@ -61,6 +61,8 @@ public class DroneLoadController: MonoBehaviour
     int times1 = 0;
     int times2 = 0;
 
+    int rope_insideWindCount = 0;
+
     ////////////////// SYSTEM SPECIFIC //////////////////
     // Quadrotor parameters
     double mQ;
@@ -264,7 +266,7 @@ public class DroneLoadController: MonoBehaviour
         */
 
         tw = new StreamWriter(filePath, false);
-        tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3");
+        tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3,insideCount");
         tw.Close();
 
 	}
@@ -521,7 +523,7 @@ public class DroneLoadController: MonoBehaviour
         if (LogTrajectory) {
             tw = new StreamWriter(filePath, true);
             //tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]}");
-            tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]},{propellers_rpms[0]},{propellers_rpms[1]},{propellers_rpms[2]},{propellers_rpms[3]},{rollRad},{pitchRad},{yawRad},{v_s[0]},{v_s[1]},{v_s[2]},{v_s_d[0]},{v_s_d[1]},{v_s_d[2]}");
+            tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]},{propellers_rpms[0]},{propellers_rpms[1]},{propellers_rpms[2]},{propellers_rpms[3]},{rollRad},{pitchRad},{yawRad},{v_s[0]},{v_s[1]},{v_s[2]},{v_s_d[0]},{v_s_d[1]},{v_s_d[2]},{rope_insideWindCount}");
             tw.Close();
         }
 
@@ -653,6 +655,7 @@ public class DroneLoadController: MonoBehaviour
         //Debug.Log($"eulerENU : {roll:F2}, {pitch:F2}, {yaw:F2}");
         //Debug.Log($"points : {numPoints}");
         int insideCount = WindCheck.PointsInsideTrapezoid(points, directionsScaled, x_s[0], x_s[1], x_s[2]);
+        rope_insideWindCount = insideCount;        
         Debug.Log($"Number of points inside the trapezoid: {insideCount}");
 
 
