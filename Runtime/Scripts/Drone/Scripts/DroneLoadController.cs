@@ -98,13 +98,12 @@ public class DroneLoadController: MonoBehaviour
     double[] coeffsZ = new double[6];
     int min_snap_flag=0;
     double aiming_time = 10;
-    double catching_time = 10; 
+    double catching_time = 8; 
     Vector<double> x_s_d_last; // waiting amd aiming
 
     double Tp = 0; // progress_time
     
     // Downward air flow
-
     // public float smallRadius = 0.5f;
     // public float largeRadius = 0.5f;
     // public float height = 0.5f;
@@ -179,114 +178,6 @@ public class DroneLoadController: MonoBehaviour
         g = Physics.gravity.magnitude;
         e3 = DenseVector.OfArray(new double[] { 0, 0, 1 });
         dt = Time.fixedDeltaTime;//1f/ControlFrequency;
-
-        //  One dimensional 
-        /*
-        // Define the start and end conditions for the trajectory
-        double startPos = 0.0, startVel = 0.0, startAcc = 0.0;
-        double endPos = 10.0, endVel = 0.0, endAcc = 0.0;
-        double T = 5.0; // Total time for trajectory
-
-        // Calculate the minimum snap trajectory coefficients
-        double[] coeffs = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos, startVel, startAcc, endPos, endVel, endAcc, T);
-
-        // Print the calculated polynomial coefficients
-        Debug.Log("Minimum Snap Trajectory Coefficients:");
-        for (int i = 0; i < coeffs.Length; i++)
-        {
-            Debug.Log($"Coefficient a{i}: {coeffs[i]}");
-        }
-
-        // Evaluate the position at different time points and print the results
-        Debug.Log("\nEvaluating Trajectory at various time points:");
-        for (double t = 0; t <= T; t += 0.5)
-        {
-            double positionAtT = MinimumSnapTrajectory.EvaluatePolynomial(coeffs, t);
-            Debug.Log($"Position at time t={t}: {positionAtT}");
-        }
-        */
-
-        //  Three dimensional 
-        // Define start and end positions, velocities, and accelerations for x, y, z
-
-        //
-        //min_snap_flag = 0;
-        //catching_time = 0; 
-        /*
-        Vector<double> x_s = BaseLink.transform.position.To<NED>().ToDense();
-        Vector3 startPos = new Vector3((float)x_s[0], (float)x_s[1], (float)x_s[2]);
-        // Vector3 startPos = new Vector3(0.0f, 0.0f, 0.0f);
-        Vector3 startVel = new Vector3(0.0f, 0.0f, 0.0f);
-        Vector3 startAcc = new Vector3(0.0f, 0.0f, 0.0f);
-
-
-        // Transformations
-        Matrix<double> R_ws = DenseMatrix.OfArray(new double[,] { { 0, 1, 0 },
-                                                                { 1, 0, 0 },
-                                                                { 0, 0, -1 } });
-
-        Vector<double> buoy_w = R_ws*Rope.GetChild(Rope.childCount-1).position.To<NED>().ToDense();
-        Vector3 endPos = new Vector3((float)buoy_w[0], (float)buoy_w[1], (float)buoy_w[2]);
-        //Vector3 endPos = new Vector3(10.0f, 5.0f, 3.0f);
-        Vector3 endVel = new Vector3(0.0f, 0.0f, 0.0f);
-        Vector3 endAcc = new Vector3(0.0f, 0.0f, 0.0f);
-
-        double T = 5.0; // Total time for trajectory
-
-        // Calculate minimum snap trajectory coefficients for each axis (x, y, z)
-        double[] coeffsX = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.x, startVel.x, startAcc.x, endPos.x, endVel.x, endAcc.x, T);
-        double[] coeffsY = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.y, startVel.y, startAcc.y, endPos.y, endVel.y, endAcc.y, T);
-        double[] coeffsZ = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.z, startVel.z, startAcc.z, endPos.z, endVel.z, endAcc.z, T);
-
-        // Print the calculated polynomial coefficients for each axis
-        Debug.Log("Minimum Snap Trajectory Coefficients (X, Y, Z):");
-
-        // Print coefficients for X
-        Debug.Log("X axis:");
-        for (int i = 0; i < coeffsX.Length; i++)
-        {
-            Debug.Log($"Coefficient a{i}: {coeffsX[i]}");
-        }
-
-        // Print coefficients for Y
-        Debug.Log("Y axis:");
-        for (int i = 0; i < coeffsY.Length; i++)
-        {
-            Debug.Log($"Coefficient a{i}: {coeffsY[i]}");
-        }
-
-        // Print coefficients for Z
-        Debug.Log("Z axis:");
-        for (int i = 0; i < coeffsZ.Length; i++)
-        {
-            Debug.Log($"Coefficient a{i}: {coeffsZ[i]}");
-        }
-
-        // Evaluate the position at different time points for all axes
-        Debug.Log("\nEvaluating Trajectory at various time points:");
-        for (double t = 0; t <= T; t += 0.5)
-        {
-            double posX = MinimumSnapTrajectory.EvaluatePolynomial(coeffsX, t);
-            double posY = MinimumSnapTrajectory.EvaluatePolynomial(coeffsY, t);
-            double posZ = MinimumSnapTrajectory.EvaluatePolynomial(coeffsZ, t);
-
-            // Evaluate velocity (first derivative)
-            double velX = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsX, t);
-            double velY = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsY, t);
-            double velZ = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsZ, t);
-
-            // Evaluate acceleration (second derivative)
-            double accX = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsX, t);
-            double accY = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsY, t);
-            double accZ = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsZ, t);
-
-            // Print the 3D position, velocity, and acceleration at time t
-            Debug.Log($"Time t={t}: Position=({posX}, {posY}, {posZ}), Velocity=({velX}, {velY}, {velZ}), Acceleration=({accX}, {accY}, {accZ})");
-            // Print the 3D position at time t
-            // Debug.Log($"Position at time t={t}: ({posX}, {posY}, {posZ})");
-        }
-        
-        */
 
         tw = new StreamWriter(filePath, false);
         tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3,insideCount");
@@ -1237,75 +1128,7 @@ public static class WindCheck
     }
 
 
-    // private static void DrawTrapezoid(double[] directionsScaled, double x, double y, double z)
-    // {
-    //     //
-    //     double r = 2;    // UAV's downward airflow range is assumed as a trapezoid
-    //     double R = 5;
-    //     double h = 5;
-    //     double[] center = new double[] { x, y, z };  // circle 1
 
-    //     // Normalize the direction vector
-    //     double[] v = NormalizeVector(directionsScaled);
-    //     Vector3 v0 = Vector3.forward; // Default direction
-    //     Vector3 axisOfRotation = Vector3.Cross(v0, v).normalized;
-    //     float angleOfRotation = Mathf.Acos(Vector3.Dot(v0, v)) * Mathf.Rad2Deg;
-
-    //     // Create rotation matrix (as Quaternion)
-    //     Quaternion rotation = Quaternion.AngleAxis(angleOfRotation, axisOfRotation);
-
-    //     // Generate circle points
-    //     List<Vector3> circle1 = GenerateCircle(center, r, rotation, segments);
-    //     List<Vector3> circle2 = GenerateCircle(center + h * v, R, rotation, segments);
-
-    //     // Draw circles
-    //     DrawCircle(circle1, Color.blue);
-    //     DrawCircle(circle2, Color.green);
-
-    //     // Connect circles
-    //     for (int i = 0; i < segments; i++)
-    //     {
-    //         Vector3 start = circle1[i];
-    //         Vector3 end = circle2[i];
-    //         DrawLine(start, end, Color.cyan);
-    //     }
-    // }
-
-    // private static List<Vector3> GenerateCircle(Vector3 center, float radius, Quaternion rotation, int segments)
-    // {
-    //     List<Vector3> points = new List<Vector3>();
-    //     for (int i = 0; i < segments; i++)
-    //     {
-    //         float angle = i * Mathf.PI * 2 / segments;
-    //         Vector3 localPoint = new Vector3(0, radius * Mathf.Cos(angle), radius * Mathf.Sin(angle));
-    //         points.Add(center + rotation * localPoint);
-    //     }
-    //     return points;
-    // }
-
-    // private static void DrawCircle(List<Vector3> circlePoints, Color color)
-    // {
-    //     for (int i = 0; i < circlePoints.Count; i++)
-    //     {
-    //         Vector3 start = circlePoints[i];
-    //         Vector3 end = circlePoints[(i + 1) % circlePoints.Count];
-    //         DrawLine(start, end, color);
-    //     }
-    // }
-
-    // private static void DrawLine(Vector3 start, Vector3 end, Color color)
-    // {
-    //     GameObject line = new GameObject("Line");
-    //     LineRenderer lr = line.AddComponent<LineRenderer>();
-    //     lr.positionCount = 2;
-    //     lr.SetPosition(0, start);
-    //     lr.SetPosition(1, end);
-    //     lr.startWidth = 0.05f;
-    //     lr.endWidth = 0.05f;
-    //     lr.material = lineMaterial;
-    //     lr.startColor = color;
-    //     lr.endColor = color;
-    // }
 
     // Utility Functions
     private static double[] NormalizeVector(double[] v)
@@ -1412,100 +1235,3 @@ public static class WindCheck
     }
 }
 
-
-// public class TrapezoidPlot : MonoBehaviour
-// {
-//     public Vector3[] points;
-//     public Vector3 directionsScaled;
-//     public Vector3 trapezoidCenter;
-
-//     public float smallRadius = 2f;
-//     public float largeRadius = 5f;
-//     public float height = 15f;
-
-//     private LineRenderer lineRenderer;
-//     private int insideCount;
-
-//     void Start()
-//     {
-//         lineRenderer = gameObject.AddComponent<LineRenderer>();
-//         lineRenderer.startWidth = 0.05f;
-//         lineRenderer.endWidth = 0.05f;
-//         lineRenderer.positionCount = 0;
-
-//         insideCount = PointsInsideTrapezoid(points, directionsScaled, trapezoidCenter);
-//         Debug.Log($"Number of points inside the trapezoid: {insideCount}");
-//     }
-
-//     int PointsInsideTrapezoid(Vector3[] points, Vector3 directionScaled, Vector3 center)
-//     {
-//         Vector3 v = directionScaled.normalized;
-//         Vector3 v0 = Vector3.forward; // Original direction
-
-//         Vector3 axisOfRotation = Vector3.Cross(v0, v).normalized;
-//         float angleOfRotation = Mathf.Acos(Vector3.Dot(v0, v));
-
-//         Quaternion rotation = Quaternion.AngleAxis(Mathf.Rad2Deg * angleOfRotation, axisOfRotation);
-
-//         List<Vector3> smallCircle = new List<Vector3>();
-//         List<Vector3> largeCircle = new List<Vector3>();
-
-//         for (int i = 0; i < 25; i++)
-//         {
-//             float theta = Mathf.PI * 2 * i / 25;
-//             Vector3 smallPoint = rotation * new Vector3(0, smallRadius * Mathf.Cos(theta), smallRadius * Mathf.Sin(theta));
-//             Vector3 largePoint = rotation * new Vector3(height, largeRadius * Mathf.Cos(theta), largeRadius * Mathf.Sin(theta));
-
-//             smallCircle.Add(smallPoint + center);
-//             largeCircle.Add(largePoint + center);
-//         }
-
-//         DrawTrapezoid(smallCircle, largeCircle);
-
-//         int count = 0;
-//         Vector3 vectorBetweenCircles = rotation * new Vector3(height, 0, 0);
-//         Vector3 unitVectorBetweenCircles = vectorBetweenCircles.normalized;
-
-//         foreach (Vector3 point in points)
-//         {
-//             Vector3 relativePoint = point - center;
-//             float projection = Vector3.Dot(relativePoint, unitVectorBetweenCircles);
-
-//             if (projection < 0 || projection > height)
-//                 continue;
-
-//             float interpolatedRadius = Mathf.Lerp(smallRadius, largeRadius, projection / height);
-//             float distanceToAxis = Vector3.Cross(relativePoint, unitVectorBetweenCircles).magnitude;
-
-//             if (distanceToAxis <= interpolatedRadius)
-//                 count++;
-//         }
-
-//         return count;
-//     }
-
-//     void DrawTrapezoid(List<Vector3> smallCircle, List<Vector3> largeCircle)
-//     {
-//         for (int i = 0; i < smallCircle.Count; i++)
-//         {
-//             Vector3 start = smallCircle[i];
-//             Vector3 end = largeCircle[i];
-//             Debug.DrawLine(start, end, Color.cyan, 100f);
-//         }
-
-//         for (int i = 0; i < smallCircle.Count - 1; i++)
-//         {
-//             Debug.DrawLine(smallCircle[i], smallCircle[i + 1], Color.blue, 100f);
-//             Debug.DrawLine(largeCircle[i], largeCircle[i + 1], Color.green, 100f);
-//         }
-//     }
-
-//     void OnDrawGizmos()
-//     {
-//         Gizmos.color = Color.red;
-//         foreach (var point in points)
-//         {
-//             Gizmos.DrawSphere(point, 0.1f);
-//         }
-//     }
-// }
