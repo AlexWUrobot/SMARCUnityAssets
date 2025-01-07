@@ -96,8 +96,12 @@ public class DroneLoadController: MonoBehaviour
     double[] coeffsX = new double[6];
     double[] coeffsY = new double[6];
     double[] coeffsZ = new double[6];
-    int min_snap_flag;
-    double catching_time; 
+    int min_snap_flag=0;
+    double aiming_time = 10;
+    double catching_time = 10; 
+    Vector<double> x_s_d_last; // waiting amd aiming
+
+    double Tp = 0; // progress_time
     
     // Downward air flow
 
@@ -206,8 +210,8 @@ public class DroneLoadController: MonoBehaviour
         // Define start and end positions, velocities, and accelerations for x, y, z
 
         //
-        min_snap_flag = 0;
-        catching_time = 0; 
+        //min_snap_flag = 0;
+        //catching_time = 0; 
         /*
         Vector<double> x_s = BaseLink.transform.position.To<NED>().ToDense();
         Vector3 startPos = new Vector3((float)x_s[0], (float)x_s[1], (float)x_s[2]);
@@ -468,64 +472,126 @@ public class DroneLoadController: MonoBehaviour
         }
 
         // Minum snap trajectory parameters 
-        double T = 5.0; // Total time for trajectory
-        
+        // double T = 10.0; // Total time for trajectory
 
 
         if(AttackTheBuoy && Rope != null)
-        {
-            if(min_snap_flag == 0)
+        {   // aiming 
+            if(min_snap_flag == 0)  
             {
+                double T = aiming_time;
+                // UAV start position 
+                Vector3 startPos = new Vector3((float)x_s[0], (float)x_s[1], (float)x_s[2]);
+                Vector3 startVel = new Vector3(0.0f, 0.0f, 0.0f);
+                Vector3 startAcc = new Vector3(0.0f, 0.0f, 0.0f);
+
+                // UAV hovers and aims at the middle of the rope, the rope (Rope.childCount) include 22 segements, 0~21
+                Vector3<ENU> endPosENU = 0.5f*(LoadLinkTF.position + Rope.GetChild(20).position).To<ENU>();
+                Vector3 endPos = new Vector3(endPosENU.x-3, endPosENU.y, endPosENU.z+3);
+                Vector3 endVel = new Vector3(0.0f, 0.0f, 0.0f);
+                Vector3 endAcc = new Vector3(0.0f, 0.0f, 0.0f);               
+
+                // Calculate minimum snap trajectory coefficients for each axis (x, y, z)
+                coeffsX = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.x, startVel.x, startAcc.x, endPos.x, endVel.x, endAcc.x, T);
+                coeffsY = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.y, startVel.y, startAcc.y, endPos.y, endVel.y, endAcc.y, T);
+                coeffsZ = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.z, startVel.z, startAcc.z, endPos.z, endVel.z, endAcc.z, T);
+
                 min_snap_flag = 1;
             }
-
-
-            if(min_snap_flag == 1)
+            if (min_snap_flag == 1)
             {
-                Vector3 startPos = new Vector3((float)x_s[0], (float)x_s[1], (float)x_s[2]);
-                // Vector3 startPos = new Vector3(0.0f, 0.0f, 0.0f);
+                aiming_time = aiming_time - 0.1; // move and aim until 5 sec
+                if (aiming_time > 0)
+                {   Tp = Tp + 0.1;
+                    double posX = MinimumSnapTrajectory.EvaluatePolynomial(coeffsX, Tp);
+                    double posY = MinimumSnapTrajectory.EvaluatePolynomial(coeffsY, Tp);
+                    double posZ = MinimumSnapTrajectory.EvaluatePolynomial(coeffsZ, Tp);
+
+                    // Evaluate velocity (first derivative)
+                    double velX = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsX, Tp);
+                    double velY = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsY, Tp);
+                    double velZ = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsZ, Tp);
+
+                    // Evaluate acceleration (second derivative)
+                    double accX = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsX, Tp);
+                    double accY = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsY, Tp);
+                    double accZ = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsZ, Tp);
+
+                    x_s_d = DenseVector.OfArray(new double[] { posX, posY, posZ });
+                    v_s_d = DenseVector.OfArray(new double[] { velX, velY, velZ });
+                    a_s_d = DenseVector.OfArray(new double[] { accX, accY, accZ });
+
+                    x_s_d_last = x_s_d;
+                    
+                }else if(aiming_time > -15.0f)
+                {
+                    x_s_d = x_s_d_last;   // waiting in the last position
+                    v_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
+                    a_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
+                    Debug.Log($"UAV is aiming.....................{aiming_time}"); 
+                }else
+                {
+                    Debug.Log("Transfer to flag 2"); 
+                    min_snap_flag = 2; // complete aiming and move to catching
+                    Tp = 0; // Reset progress time to 0 for next motion: cathcing  
+                }
+            }
+
+            // catching 
+            if(min_snap_flag == 2)
+            {
+                double T = catching_time;
+                Vector3 startPos = new Vector3((float)x_s[0], (float)x_s[1], (float)x_s[2]); // current position
                 Vector3 startVel = new Vector3(0.0f, 0.0f, 0.0f);
                 Vector3 startAcc = new Vector3(0.0f, 0.0f, 0.0f);
 
                 // For now we want the end position to be the middle of the rope,
                 // but later it will be refined based on the state estimation and
                 // optimal touchdown point
-                Vector3<ENU> endPosENU = 0.5f*(LoadLinkTF.position + Rope.GetChild(Rope.childCount-1).position).To<ENU>();
+
+                //Vector3<ENU> endPosENU = 0.5f*(LoadLinkTF.position + Rope.GetChild(Rope.childCount-1).position).To<ENU>();
+                Vector3<ENU> endPosENU = 0.5f*(LoadLinkTF.position + Rope.GetChild(20).position).To<ENU>();  // rope position
                 Vector3 endPos = new Vector3(endPosENU.x, endPosENU.y, endPosENU.z);
-                //Vector3 endPos = new Vector3(10.0f, 5.0f, 3.0f);
                 Vector3 endVel = new Vector3(0.0f, 0.0f, 0.0f);
                 Vector3 endAcc = new Vector3(0.0f, 0.0f, 0.0f);
-
               
                 // Calculate minimum snap trajectory coefficients for each axis (x, y, z)
                 coeffsX = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.x, startVel.x, startAcc.x, endPos.x, endVel.x, endAcc.x, T);
                 coeffsY = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.y, startVel.y, startAcc.y, endPos.y, endVel.y, endAcc.y, T);
                 coeffsZ = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.z, startVel.z, startAcc.z, endPos.z, endVel.z, endAcc.z, T);
-                min_snap_flag = 2;
+                min_snap_flag = 3;
             }
-         
-            if(min_snap_flag == 2 && catching_time <= T)  
+            if(min_snap_flag == 3)  
             {
-                catching_time = catching_time + 0.1;
-                double posX = MinimumSnapTrajectory.EvaluatePolynomial(coeffsX, catching_time);
-                double posY = MinimumSnapTrajectory.EvaluatePolynomial(coeffsY, catching_time);
-                double posZ = MinimumSnapTrajectory.EvaluatePolynomial(coeffsZ, catching_time);
+                Debug.Log($"UAV is catching.....................{catching_time}"); 
+                catching_time = catching_time - 0.1;
+                if (catching_time > 0)
+                {    
+                    Tp = Tp + 0.1;
+                    double posX = MinimumSnapTrajectory.EvaluatePolynomial(coeffsX, Tp);
+                    double posY = MinimumSnapTrajectory.EvaluatePolynomial(coeffsY, Tp);
+                    double posZ = MinimumSnapTrajectory.EvaluatePolynomial(coeffsZ, Tp);
 
-                // Evaluate velocity (first derivative)
-                double velX = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsX, catching_time);
-                double velY = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsY, catching_time);
-                double velZ = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsZ, catching_time);
+                    // Evaluate velocity (first derivative)
+                    double velX = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsX, Tp);
+                    double velY = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsY, Tp);
+                    double velZ = MinimumSnapTrajectory.EvaluatePolynomialDerivative(coeffsZ, Tp);
 
-                // Evaluate acceleration (second derivative)
-                double accX = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsX, catching_time);
-                double accY = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsY, catching_time);
-                double accZ = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsZ, catching_time);
+                    // Evaluate acceleration (second derivative)
+                    double accX = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsX, Tp);
+                    double accY = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsY, Tp);
+                    double accZ = MinimumSnapTrajectory.EvaluatePolynomialSecondDerivative(coeffsZ, Tp);
 
+                    x_s_d = DenseVector.OfArray(new double[] { posX, posY, posZ });
+                    v_s_d = DenseVector.OfArray(new double[] { velX, velY, velZ });
+                    a_s_d = DenseVector.OfArray(new double[] { accX, accY, accZ });
 
-                x_s_d = DenseVector.OfArray(new double[] { posX, posY, posZ });
-                v_s_d = DenseVector.OfArray(new double[] { velX, velY, velZ });
-                a_s_d = DenseVector.OfArray(new double[] { accX, accY, accZ });
-
+                    //Debug.Log("UAV is catching..................... catching...................."); 
+                    
+                }else{
+                    min_snap_flag = 4; // complete catching and move to lifting
+                    Tp = 0; // Reset progress time to 0 for next motion: lifting  
+                }
             }
             
         
@@ -537,9 +603,6 @@ public class DroneLoadController: MonoBehaviour
             */
             //Debug.Log($"x_s_d: {x_s_d[0]:F2},{x_s_d[1]:F2},{x_s_d[2]:F2}"); // desired position
             // Debug.Log($"x_s: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}"); // desired position
-        }else
-        {
-            catching_time = 0; // reset time
         }
         // Debug.Log($"t: {t}"); // Time
 
@@ -642,7 +705,7 @@ public class DroneLoadController: MonoBehaviour
         //Debug.Log($"AUV: {LoadLinkTF.position[0]:F2},{LoadLinkTF.position[1]:F2},{LoadLinkTF.position[2]:F2}"); // 0, 0.04, 0.65
 
         Vector<double> x_s = BaseLink.transform.position.To<ENU>().ToDense();
-        Debug.Log($"UAV: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}");    // -0.06, 2.94, 1.96
+        //Debug.Log($"UAV: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}");    // -0.06, 2.94, 1.96
 
         //x_s = Rope.GetChild(Rope.childCount-1).position.To<ENU>().ToDense();
         //Debug.Log($"RopeCount: {Rope.childCount}");
@@ -702,7 +765,7 @@ public class DroneLoadController: MonoBehaviour
 
         int insideCount2 = PointsInsideTrapezoid(vectorPoints,vectorDirectionScaled,UAV_position);
         rope_insideWindCount = insideCount2; 
-        Debug.Log($"2 Number of points inside the trapezoid: {insideCount2}");
+        // Debug.Log($"2 Number of points inside the trapezoid: {insideCount2}");
 
         //Debug.DrawLine(UAV_position, UAV_position + vectorDirectionScaled * 5, Color.red, 2f);
 

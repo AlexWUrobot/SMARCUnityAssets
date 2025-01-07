@@ -57,7 +57,7 @@ namespace VehicleComponents.Actuators
             // if(HoverDefault) Debug.Log("the value of 4xr is: " + r*4 );
 
             // Visualize the applied force
-            Debug.DrawRay(transform.position, (float)r * transform.forward, Color.red);
+            //Debug.DrawRay(transform.position, (float)r * transform.forward, Color.red);
             
             parentArticulationBody.AddForceAtPosition((float)r * parentArticulationBody.transform.forward,
                                                    parentArticulationBody.transform.position,
