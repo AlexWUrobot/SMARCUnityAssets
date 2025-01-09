@@ -46,7 +46,6 @@ public class DroneLoadController: MonoBehaviour
     public bool Figure8 = false;
     public bool LogTrajectory = false;
     public bool Helix = false;
-    private double TrajectoryStartTime = 0;
     
 
 	Propeller[] propellers;
@@ -160,9 +159,7 @@ public class DroneLoadController: MonoBehaviour
             ArticulationBody[] sam_ab_list = LoadLinkTF.root.gameObject.GetComponentsInChildren<ArticulationBody>();
             foreach (ArticulationBody sam_ab in sam_ab_list) 
             {
-                if (sam_ab.enabled) {
-                    mL += sam_ab.mass;
-                }
+                mL += sam_ab.mass;
             }
         }
 
@@ -180,8 +177,11 @@ public class DroneLoadController: MonoBehaviour
         // Simulation parameters
         g = Physics.gravity.magnitude;
         e3 = DenseVector.OfArray(new double[] { 0, 0, 1 });
-        dt = Time.fixedDeltaTime;//1f/ControlFrequency;
+        dt = Time.fixedDeltaTime;//1f/ControlFrequency; 
 
+        // Log the time between FixedUpdate calls
+        //Debug.Log($"FixedUpdate interval (seconds): {Time.fixedDeltaTime}");   = 0.02 sec
+        
         tw = new StreamWriter(filePath, false);
         tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3,insideCount");
         tw.Close();
@@ -234,26 +234,25 @@ public class DroneLoadController: MonoBehaviour
         
         // Figure 8
         if (Figure8) {
-            (xL_s_d, vL_s_d, aL_s_d) = Figure8Trajectory(Time.time - TrajectoryStartTime);
+            (xL_s_d, vL_s_d, aL_s_d) = Figure8Trajectory(Time.time);
         }
 
-        Vector<double> b1d = DenseVector.OfArray(new double[] { Math.Sqrt(2)/2, -Math.Sqrt(2)/2, 0 });
-        
         // Helix
-        if (Helix) {
-            (xL_s_d, vL_s_d, aL_s_d, b1d_d) = HelixTrajectory(Time.time - TrajectoryStartTime);
-            b1d = b1d_d;
-        }
+        // if (Helix) {
+        //     (xL_s_d, vL_s_d, aL_s_d, b1d_d) = HelixTrajectory(Time.time);
+        // }
 
-        if (!Figure8 && !Helix) {
-            TrajectoryStartTime = Time.time;
-        }
-        
         // Logging
         if (LogTrajectory) {
             tw = new StreamWriter(filePath, true);
             tw.WriteLine($"{Time.time},{xL_s[0]},{xL_s[1]},{xL_s[2]},{xL_s_d[0]},{xL_s_d[1]},{xL_s_d[2]}");
             tw.Close();
+        }
+
+        Vector<double> b1d = DenseVector.OfArray(new double[] { Math.Sqrt(2)/2, -Math.Sqrt(2)/2, 0 });
+        if (Helix) {
+            (xL_s_d, vL_s_d, aL_s_d, b1d_d) = HelixTrajectory(Time.time);
+            b1d = b1d_d;
         }
 
         // Load position controller
@@ -358,16 +357,12 @@ public class DroneLoadController: MonoBehaviour
 
         // Figure 8
         if (Figure8) {
-            (x_s_d, v_s_d, a_s_d) = Figure8Trajectory(Time.time - TrajectoryStartTime);
+            (x_s_d, v_s_d, a_s_d) = Figure8Trajectory(Time.time);
         }
 
-        // Helix
+        // Figure 8
         if (Helix) {
-            (x_s_d, v_s_d, a_s_d, b1d_d) = HelixTrajectory(Time.time - TrajectoryStartTime);
-        }
-
-        if (!Figure8 && !Helix) {
-            TrajectoryStartTime = Time.time;
+            (x_s_d, v_s_d, a_s_d, b1d_d) = HelixTrajectory(Time.time);
         }
 
         // Minum snap trajectory parameters 
@@ -491,6 +486,7 @@ public class DroneLoadController: MonoBehaviour
                     min_snap_flag = 4; // complete catching and move to lifting
                     Tp = 0; // Reset progress time to 0 for next motion: lifting  
                 }
+                //   
             }
             
         
@@ -758,27 +754,26 @@ public class DroneLoadController: MonoBehaviour
     }
 
     (Vector<double>, Vector<double>, Vector<double>) Figure8Trajectory(double t) {
-        double t_max = 20;
-        double A = 8;
-        double B = 4;
-        double C = 2;
+        double t_max = 5;
+        double A = 2;
+        double B = 1;
         double freq = 2 * Math.PI / t_max;
 
-        Vector<double> x_s_d = DenseVector.OfArray(new double[] { A*Math.Sin(freq*t), B*Math.Sin(2*freq*t), C*Math.Sin(freq*t) + 6 });
-        Vector<double> v_s_d = DenseVector.OfArray(new double[] { A*freq*Math.Cos(freq*t), 2*B*freq*Math.Cos(2*freq*t), C*freq*Math.Cos(freq*t) });
-        Vector<double> a_s_d = DenseVector.OfArray(new double[] { -A*freq*freq*Math.Sin(freq*t), -4*B*freq*freq*Math.Sin(2*freq*t), -C*freq*freq*Math.Sin(freq*t) });
+        Vector<double> x_s_d = DenseVector.OfArray(new double[] { A*Math.Sin(freq*t), B*Math.Sin(2*freq*t), 0.5*Math.Sin(freq*t) + 1.5 });
+        Vector<double> v_s_d = DenseVector.OfArray(new double[] { A*freq*Math.Cos(freq*t), 2*B*freq*Math.Cos(2*freq*t), 0.5*freq*Math.Cos(freq*t) });
+        Vector<double> a_s_d = DenseVector.OfArray(new double[] { -A*freq*freq*Math.Sin(freq*t), -4*B*freq*freq*Math.Sin(2*freq*t), -0.5*freq*freq*Math.Sin(freq*t) });
 
         return (x_s_d, v_s_d, a_s_d);
     }
 
     (Vector<double>, Vector<double>, Vector<double>, Vector<double>) HelixTrajectory(double t) {
-        double t_max = 5;
-        double A = 1;
-        double B = 4;
-        double C = 6;
+        double t_max = 1;
+        double A = 0.4;
+        double B = 0.4;
+        double C = 0.6;
         double freq = Math.PI / t_max;
 
-        Vector<double> x_s_d = DenseVector.OfArray(new double[] { A*t, B*Math.Sin(freq*t),            C*Math.Cos(freq*t) + 10 });
+        Vector<double> x_s_d = DenseVector.OfArray(new double[] { A*t, B*Math.Sin(freq*t),            C*Math.Cos(freq*t)});
         Vector<double> v_s_d = DenseVector.OfArray(new double[] { A,   B*freq*Math.Cos(freq*t),      -C*freq*Math.Sin(freq*t) });
         Vector<double> a_s_d = DenseVector.OfArray(new double[] { 0,  -B*freq*freq*Math.Sin(freq*t), -C*freq*freq*Math.Cos(freq*t)});
 

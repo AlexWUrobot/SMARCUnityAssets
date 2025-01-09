@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
+from mpl_toolkits.mplot3d import Axes3D
+
 # read log.csv in the same folder
 df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log.csv'))
 t = df['t']
@@ -140,6 +142,23 @@ plt.xlabel("time")
 plt.legend()
 
 
+# Create a 3D plot
+fig = plt.figure(figsize=(10, 7))
+ax = fig.add_subplot(111, projection='3d')
+
+# Plot the trajectories
+ax.plot(x_s1, x_s2, x_s3, color='blue', label='Source Trajectory')
+#ax.plot(x_s_d1, x_s_d2, x_s_d3, color='red', label='Destination Trajectory', marker = 'o')
+ax.scatter(x_s_d1, x_s_d2, x_s_d3, c='red', label='Destination Points')
+
+# # Set labels and title
+ax.set_title('3D Plot of Source and Destination Points')
+ax.set_xlabel('X Axis (m)')
+ax.set_ylabel('Y Axis (m)')
+ax.set_zlabel('Z Axis (m)')
+
+# Show legend
+ax.legend()
 
 
 plt.show()
