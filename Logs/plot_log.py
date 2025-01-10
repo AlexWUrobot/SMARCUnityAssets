@@ -69,7 +69,7 @@ plt.legend()
 plt.subplot(3, 1, 3)
 plt.plot(t, x_s3-x_s_d3, label='z_error')
 plt.ylabel("meter")
-plt.xlabel("time")
+plt.xlabel("time (s)")
 plt.legend()
 
 ########################################## Velocity
@@ -91,6 +91,7 @@ plt.subplot(3, 1, 3)
 plt.plot(t, v_s3, label='v_z')
 plt.plot(t, v_s_d3, label='desired_v_z')
 plt.ylabel("z-axis meter/sec")
+plt.xlabel("time (s)")
 plt.legend()
 
 ########################################## RPM
@@ -114,7 +115,7 @@ plt.legend()
 plt.subplot(4, 1, 4)
 plt.plot(t, propellers_rpms4, label='rotor 4')
 plt.ylabel("rpm")
-plt.xlabel("time")
+plt.xlabel("time (s)")
 plt.legend()
 
 ########################################## Attitude and Wind
@@ -138,7 +139,7 @@ plt.legend()
 plt.subplot(4, 1, 4)
 plt.plot(t, insideCount, label='Rope inside wind')
 plt.ylabel("Count")
-plt.xlabel("time")
+plt.xlabel("time (s)")
 plt.legend()
 
 

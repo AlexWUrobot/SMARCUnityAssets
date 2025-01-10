@@ -47,6 +47,7 @@ public class DroneLoadController: MonoBehaviour
     public bool LogTrajectory = false;
     public bool Helix = false;
     private double TrajectoryStartTime = 0;
+    private double CatchStartTime = 0; // for CatchStartTime start time
     
 
 	Propeller[] propellers;
@@ -98,8 +99,8 @@ public class DroneLoadController: MonoBehaviour
     double[] coeffsY = new double[6];
     double[] coeffsZ = new double[6];
     int min_snap_flag=0;
-    double aiming_time = 10;
-    double catching_time = 8; 
+    double aiming_time = 5;
+    double catching_time = 3; 
     Vector<double> x_s_d_last; // waiting amd aiming
 
     double Tp = 0; // progress_time
@@ -194,7 +195,10 @@ public class DroneLoadController: MonoBehaviour
 	// Update is called once per frame
 	void FixedUpdate() 
     {
+        //float startTime = Time.realtimeSinceStartup;
 		ComputeRPMs();
+        //float endTime = Time.realtimeSinceStartup;
+        //Debug.Log($"Execution Time: {(endTime - startTime) * 1000} ms");
         ApplyRPMs();
 	}
 
@@ -399,12 +403,18 @@ public class DroneLoadController: MonoBehaviour
                 coeffsZ = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.z, startVel.z, startAcc.z, endPos.z, endVel.z, endAcc.z, T);
 
                 min_snap_flag = 1;
+                CatchStartTime = Time.time; // reset time
             }
             if (min_snap_flag == 1)
             {
-                aiming_time = aiming_time - 0.1; // move and aim until 5 sec
-                if (aiming_time > 0)
-                {   Tp = Tp + 0.1;
+                //aiming_time = aiming_time - 0.1; // move and aim until 5 sec
+
+                Tp = Time.time - CatchStartTime;
+
+                if (Tp < aiming_time)
+                {
+                //if (aiming_time > 0)
+                //{   //Tp = Tp + 0.1;
                     double posX = MinimumSnapTrajectory.EvaluatePolynomial(coeffsX, Tp);
                     double posY = MinimumSnapTrajectory.EvaluatePolynomial(coeffsY, Tp);
                     double posZ = MinimumSnapTrajectory.EvaluatePolynomial(coeffsZ, Tp);
@@ -425,12 +435,14 @@ public class DroneLoadController: MonoBehaviour
 
                     x_s_d_last = x_s_d;
                     
-                }else if(aiming_time > -15.0f)
+                //}else if(aiming_time > -15.0f)
+                }else if(Tp < aiming_time + 5.0f)
                 {
                     x_s_d = x_s_d_last;   // waiting in the last position
                     v_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
                     a_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
-                    Debug.Log($"UAV is aiming.....................{aiming_time}"); 
+                    //Debug.Log($"UAV is aiming.....................{aiming_time}"); 
+                    Debug.Log($"UAV is aiming.....................{Tp}");
                 }else
                 {
                     Debug.Log("Transfer to flag 2"); 
@@ -462,14 +474,19 @@ public class DroneLoadController: MonoBehaviour
                 coeffsY = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.y, startVel.y, startAcc.y, endPos.y, endVel.y, endAcc.y, T);
                 coeffsZ = MinimumSnapTrajectory.MinimumSnapCoefficients(startPos.z, startVel.z, startAcc.z, endPos.z, endVel.z, endAcc.z, T);
                 min_snap_flag = 3;
+                CatchStartTime = Time.time; // reset time
             }
             if(min_snap_flag == 3)  
             {
                 Debug.Log($"UAV is catching.....................{catching_time}"); 
-                catching_time = catching_time - 0.1;
-                if (catching_time > 0)
-                {    
-                    Tp = Tp + 0.1;
+                //catching_time = catching_time - 0.1;
+                Tp = Time.time - CatchStartTime;
+                if ( Tp < catching_time)
+                {
+                //if (catching_time > 0)
+                //{    
+                    //Tp = Tp + 0.1;
+                    //Tp = Time.time - CatchStartTime;
                     double posX = MinimumSnapTrajectory.EvaluatePolynomial(coeffsX, Tp);
                     double posY = MinimumSnapTrajectory.EvaluatePolynomial(coeffsY, Tp);
                     double posZ = MinimumSnapTrajectory.EvaluatePolynomial(coeffsZ, Tp);
