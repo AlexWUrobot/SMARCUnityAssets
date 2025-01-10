@@ -52,6 +52,7 @@ plt.subplot(3, 1, 3)
 plt.plot(t, x_s3, label='x_s3')
 plt.plot(t, x_s_d3, label='x_s_d3')
 plt.ylabel("z-axis meter")
+plt.xlabel("time (s)")
 plt.legend()
 
 
@@ -79,6 +80,9 @@ plt.subplot(3, 1, 1)
 plt.plot(t, v_s1, label='v_x')
 plt.plot(t, v_s_d1, label='desired_v_x')
 plt.ylabel("x-axis meter/sec")
+#ax = plt.gca()
+#ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda val, pos: f'{val:.2f}'))
+
 plt.legend()
 
 plt.subplot(3, 1, 2)
@@ -144,16 +148,16 @@ plt.legend()
 
 
 # Create a 3D plot
-fig = plt.figure(figsize=(10, 7))
+fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
 # Plot the trajectories
-ax.plot(x_s1, x_s2, x_s3, color='blue', label='Source Trajectory')
+ax.plot(x_s1, x_s2, x_s3, color='blue', label='Real Trajectory')
 #ax.plot(x_s_d1, x_s_d2, x_s_d3, color='red', label='Destination Trajectory', marker = 'o')
-ax.scatter(x_s_d1, x_s_d2, x_s_d3, c='red', label='Destination Points')
+ax.scatter(x_s_d1, x_s_d2, x_s_d3, c='red', label='Desired Points')
 
 # # Set labels and title
-ax.set_title('3D Plot of Source and Destination Points')
+ax.set_title('3D Plot of Real and Desired Points')
 ax.set_xlabel('X Axis (m)')
 ax.set_ylabel('Y Axis (m)')
 ax.set_zlabel('Z Axis (m)')
