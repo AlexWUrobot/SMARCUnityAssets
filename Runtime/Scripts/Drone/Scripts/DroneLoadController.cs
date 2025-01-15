@@ -12,6 +12,8 @@ using Rope;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 
+using UnityEngine.SceneManagement;
+
 using System.Linq;
 public class DroneLoadController: MonoBehaviour 
 {
@@ -107,6 +109,8 @@ public class DroneLoadController: MonoBehaviour
     Vector<double> x_s_d_last; // waiting amd aiming
 
     double Tp = 0; // progress_time
+
+    int spaceBarPressCount = 0;
     
     // Downward air flow
     // public float smallRadius = 0.5f;
@@ -203,7 +207,29 @@ public class DroneLoadController: MonoBehaviour
         //float endTime = Time.realtimeSinceStartup;
         //Debug.Log($"Execution Time: {(endTime - startTime) * 1000} ms");
         ApplyRPMs();
+        // Check if space bar is pressed
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            spaceBarPressCount++;
+            Debug.Log($"Space Bar Pressed: {spaceBarPressCount} times");
+            // Check if the space bar press threshold is met
+            if (spaceBarPressCount >= 3)
+            {
+                ResetScene();
+            }
+        }
+
 	}
+
+    private void ResetScene()
+    {
+        // Reset the scene and variables
+        Debug.Log("Resetting Scene...");
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        // Reset the counter and space bar press count
+        spaceBarPressCount = 0;
+        //timer = 0f;
+    }
 
     (double, Vector<double>) SuspendedLoadControl()
     {
@@ -640,6 +666,9 @@ public class DroneLoadController: MonoBehaviour
                 }else{
                     min_snap_flag = 8; // complete catching and move to lifting
                     //Tp = 0; // Reset progress time to 0 for next motion: lifting  
+                    LogTrajectory = false;
+                    AttackTheBuoy = false;
+                    Debug.Log($"switch to suspended control");
                 }
                 //   
             }       
