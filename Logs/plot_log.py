@@ -36,6 +36,8 @@ insideCount = df['insideCount']
 vertical_dashline_turn_on = True
 MST_time_stamp = [5, 10, 12, 15] # Timestamps for dashed lines
 stage = ["aim","catch", "forward", "lift"]  # Annotations for each stage
+integral_start_time = MST_time_stamp[0]
+integral_end_time   = MST_time_stamp[1]
 ########################################## Position
 
 plt.figure(1)
@@ -192,6 +194,14 @@ if vertical_dashline_turn_on == True:
         plt.text(ts, max(insideCount) * 0.8, label, color='blue', rotation=90, 
                 verticalalignment='center', horizontalalignment='right')
 
+    # Find the indices for the desired time range
+    mask = (t >= integral_start_time) & (t <= integral_end_time)
+    t_filtered = t[mask]
+    insideCount_filtered = insideCount[mask]
+    # Perform numerical integration (trapezoidal rule)
+    integral_trapz = np.trapz(insideCount_filtered, t_filtered)
+    print(f"Integral of insideCount (Trapezoidal Rule) from {integral_start_time} to {integral_end_time} seconds: {integral_trapz}")
+ 
 
 # Create a 3D plot
 fig = plt.figure()
