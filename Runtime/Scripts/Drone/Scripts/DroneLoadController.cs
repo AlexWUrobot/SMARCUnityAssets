@@ -163,7 +163,7 @@ public class DroneLoadController: MonoBehaviour
         mQ = base_link_ab.mass; // Quadrotor mass (kg)
         d = 0.315; // Distance from the center of the quadrotor to each propeller (assumes square prop configuration) (m)
         J = DenseMatrix.OfArray(new double[,] { { base_link_ab.inertiaTensor.x, 0, 0 }, { 0, base_link_ab.inertiaTensor.z, 0 }, { 0, 0, base_link_ab.inertiaTensor.y } }); // Inertia tensor of the quadrotor in ENU (kg m^2)
-        c_tau_f = 0.08f; // Torque to force ratio of the propellers (also found in Propeller.cs, TODO: make this one variable) (m)
+        c_tau_f = 8.004e-2f; // Torque to force ratio of the propellers (also found in Propeller.cs, TODO: make this one variable) (m)
 
         T = DenseMatrix.OfArray(new double[,] { { 1, 1, 1, 1 },
                                                     { d, 0, -d, 0 },
