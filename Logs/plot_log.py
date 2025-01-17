@@ -33,6 +33,9 @@ v_s_d3 = df['v_s_d3']
 
 insideCount = df['insideCount']
 
+vertical_dashline_turn_on = True
+MST_time_stamp = [5, 10, 12, 15] # Timestamps for dashed lines
+stage = ["aim","catch", "forward", "lift"]  # Annotations for each stage
 ########################################## Position
 
 plt.figure(1)
@@ -41,6 +44,14 @@ plt.plot(t, x_s1, label='x_s1')
 plt.plot(t, x_s_d1, label='x_s_d1')
 plt.ylabel("x-axis meter")
 plt.legend()
+if vertical_dashline_turn_on == True:
+    # Add vertical dashed lines with annotations
+    for ts, label in zip(MST_time_stamp, stage):
+        plt.axvline(x=ts, color='r', linestyle='--', linewidth=1)
+        plt.text(ts, max(x_s1) * 0.8, label, color='blue', rotation=90, 
+                verticalalignment='center', horizontalalignment='right')
+
+
 
 plt.subplot(3, 1, 2)
 plt.plot(t, x_s2, label='x_s2')
@@ -61,7 +72,13 @@ plt.subplot(3, 1, 1)
 plt.plot(t, x_s1-x_s_d1, label='x_error')
 plt.ylabel("meter")
 plt.legend()
-
+if vertical_dashline_turn_on == True:
+    # Add vertical dashed lines with annotations
+    for ts, label in zip(MST_time_stamp, stage):
+        plt.axvline(x=ts, color='r', linestyle='--', linewidth=1)
+        plt.text(ts, max(x_s1-x_s_d1) * 0.8, label, color='blue', rotation=90, 
+                verticalalignment='center', horizontalalignment='right')
+        
 plt.subplot(3, 1, 2)
 plt.plot(t, x_s2-x_s_d2, label='y_error')
 plt.ylabel("meter")
@@ -80,10 +97,25 @@ plt.subplot(3, 1, 1)
 plt.plot(t, v_s1, label='v_x')
 plt.plot(t, v_s_d1, label='desired_v_x')
 plt.ylabel("x-axis meter/sec")
+plt.legend()
+
+# if vertical_dashline_turn_on == True:
+#     # Add vertical dashed lines at the specified timestamps
+#     for ts in MST_time_stamp:
+#         plt.axvline(x=ts, color='r', linestyle='--', linewidth=1, label=f't = {ts}' if ts == MST_time_stamp[0] else "")
+
+if vertical_dashline_turn_on == True:
+    # Add vertical dashed lines with annotations
+    for ts, label in zip(MST_time_stamp, stage):
+        plt.axvline(x=ts, color='r', linestyle='--', linewidth=1)
+        plt.text(ts, max(v_s1) * 0.8, label, color='blue', rotation=90, 
+                verticalalignment='center', horizontalalignment='right')
+
+
+
 #ax = plt.gca()
 #ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda val, pos: f'{val:.2f}'))
 
-plt.legend()
 
 plt.subplot(3, 1, 2)
 plt.plot(t, v_s2, label='v_y')
@@ -105,7 +137,13 @@ plt.subplot(4, 1, 1)
 plt.plot(t, propellers_rpms1, label='rotor 1')
 plt.ylabel("rpm")
 plt.legend()
-
+if vertical_dashline_turn_on == True:
+    # Add vertical dashed lines with annotations
+    for ts, label in zip(MST_time_stamp, stage):
+        plt.axvline(x=ts, color='r', linestyle='--', linewidth=1)
+        plt.text(ts, max(propellers_rpms1) * 0.8, label, color='blue', rotation=90, 
+                verticalalignment='center', horizontalalignment='right')
+        
 plt.subplot(4, 1, 2)
 plt.plot(t, propellers_rpms2, label='rotor 2')
 plt.ylabel("rpm")
@@ -145,6 +183,14 @@ plt.plot(t, insideCount, label='Rope inside wind')
 plt.ylabel("Count")
 plt.xlabel("time (s)")
 plt.legend()
+
+
+if vertical_dashline_turn_on == True:
+    # Add vertical dashed lines with annotations
+    for ts, label in zip(MST_time_stamp, stage):
+        plt.axvline(x=ts, color='r', linestyle='--', linewidth=1)
+        plt.text(ts, max(insideCount) * 0.8, label, color='blue', rotation=90, 
+                verticalalignment='center', horizontalalignment='right')
 
 
 # Create a 3D plot

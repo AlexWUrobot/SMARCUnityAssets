@@ -108,6 +108,8 @@ public class DroneLoadController: MonoBehaviour
     double catching_time = 3; 
     double forward_time = 0.5; 
     double lifting_time = 3; 
+
+    double total_MST_time; 
     
     Vector<double> x_s_d_last; // waiting amd aiming
 
@@ -431,20 +433,28 @@ public class DroneLoadController: MonoBehaviour
         {
             if(min_snap_flag == 0)
             {
-                MST_time_stamp = new List<double> { 0, 5, 10 }; // time stamp
+                MST_time_stamp = new List<double> { 0, 5, 10, 12, 15}; // time stamp
+                total_MST_time = MST_time_stamp[MST_time_stamp.Count - 1];
 
+                // UAV hovers and aims at the middle of the rope, the rope (Rope.childCount) include 22 segements, 0~21
+                Vector3<ENU> endPosENU = 0.5f*(LoadLinkTF.position + Rope.GetChild(20).position).To<ENU>();
+                Vector3 p_aim = new Vector3(endPosENU.x-3, endPosENU.y, endPosENU.z+3);  // 1st aiming
+                Vector3 p_catch = new Vector3(endPosENU.x - 0.05f, endPosENU.y, endPosENU.z);   // 2nd catch 
+                Vector3 p_forward = new Vector3(endPosENU.x + 1.0f, endPosENU.y, endPosENU.z - 0.3f); // 3rd move forward
+                Vector3 p_lift = new Vector3(endPosENU.x + 1.5f, endPosENU.y, endPosENU.z+3); // 4th lift
+                
                 //{1st waypoints, 2nd, 3rd, 4th}    
-                var positionsX = new List<double> { (float)x_s[0], 5, 10 };
-                var velocitiesX = new List<double> { 0, 0, 0 };
-                var accelerationsX = new List<double> { 0, 0, 0 };
+                var positionsX = new List<double> { (float)x_s[0], (float)p_aim[0], (float)p_catch[0], (float)p_forward[0], (float)p_lift[0]};
+                var velocitiesX = new List<double> { 0, 0, 0, 0, 0 };
+                var accelerationsX = new List<double> { 0, 0, 0, 0, 0 };
  
-                var positionsY = new List<double> { (float)x_s[1], 5, 10 };
-                var velocitiesY = new List<double> { 0, 0, 0 };
-                var accelerationsY = new List<double> { 0, 0, 0 };
+                var positionsY = new List<double> { (float)x_s[1], (float)p_aim[1], (float)p_catch[1], (float)p_forward[1], (float)p_lift[1]};
+                var velocitiesY = new List<double> { 0, 0, 0, 0, 0 };
+                var accelerationsY = new List<double> { 0, 0, 0, 0, 0 };
 
-                var positionsZ = new List<double> { (float)x_s[2], 5, 10 };
-                var velocitiesZ = new List<double> { 0, 0, 0 };
-                var accelerationsZ = new List<double> { 0, 0, 0 };               
+                var positionsZ = new List<double> { (float)x_s[2], (float)p_aim[2], (float)p_catch[2], (float)p_forward[2], (float)p_lift[2]};
+                var velocitiesZ = new List<double> { 0, 0, 0, 0, 0 };
+                var accelerationsZ = new List<double> { 0, 0, 0, 0, 0 };               
 
                 trajectoryCoefficients_x = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsX, velocitiesX, accelerationsX, MST_time_stamp);
                 trajectoryCoefficients_y = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsY, velocitiesY, accelerationsY, MST_time_stamp);
@@ -458,7 +468,7 @@ public class DroneLoadController: MonoBehaviour
             {
                 Tp = Time.time - CatchStartTime;
 
-                if(Tp < catching_time)
+                if(Tp < total_MST_time)
                 {
                     var (posX, velX, accX) = ContinueMinimumSnapTrajectory.EvaluateTrajectory(trajectoryCoefficients_x, MST_time_stamp, Tp);
                     var (posY, velY, accY) = ContinueMinimumSnapTrajectory.EvaluateTrajectory(trajectoryCoefficients_y, MST_time_stamp, Tp);
@@ -466,7 +476,14 @@ public class DroneLoadController: MonoBehaviour
                     x_s_d = DenseVector.OfArray(new double[] { posX, posY, posZ });
                     v_s_d = DenseVector.OfArray(new double[] { velX, velY, velZ });
                     a_s_d = DenseVector.OfArray(new double[] { accX, accY, accZ });
-                    Debug.Log($"UAV is catching.....................{Tp} / {catching_time}"); 
+                    x_s_d_last = x_s_d;
+                    Debug.Log($"UAV is catching.....................{Tp} / {total_MST_time}"); 
+                }else{
+                    x_s_d = x_s_d_last;
+                    v_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
+                    a_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
+
+                    Debug.Log($"UAV complete catching, stay in the last point");
                 }
             }
         }
@@ -754,7 +771,12 @@ public class DroneLoadController: MonoBehaviour
         if (LogTrajectory) {
             tw = new StreamWriter(filePath, true);
             //tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]}");
-            tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]},{propellers_rpms[0]},{propellers_rpms[1]},{propellers_rpms[2]},{propellers_rpms[3]},{rollRad},{pitchRad},{yawRad},{v_s[0]},{v_s[1]},{v_s[2]},{v_s_d[0]},{v_s_d[1]},{v_s_d[2]},{rope_insideWindCount}");
+            if(ContinueTrajectory == true)
+            {
+                tw.WriteLine($"{Tp},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]},{propellers_rpms[0]},{propellers_rpms[1]},{propellers_rpms[2]},{propellers_rpms[3]},{rollRad},{pitchRad},{yawRad},{v_s[0]},{v_s[1]},{v_s[2]},{v_s_d[0]},{v_s_d[1]},{v_s_d[2]},{rope_insideWindCount}");
+            }else{
+                tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]},{propellers_rpms[0]},{propellers_rpms[1]},{propellers_rpms[2]},{propellers_rpms[3]},{rollRad},{pitchRad},{yawRad},{v_s[0]},{v_s[1]},{v_s[2]},{v_s_d[0]},{v_s_d[1]},{v_s_d[2]},{rope_insideWindCount}");
+            }
             tw.Close();
         }
 
