@@ -26,7 +26,7 @@ namespace VehicleComponents.Actuators
         public double DefaultHoverRPM;
 
         [SerializeField] private ArticulationBody baseLinkArticulationBody;
-        private float c_tau_f = 0.08f;
+        private float c_tau_f = 8.004e-2f;
         
         
         public void SetRpm(double rpm)
