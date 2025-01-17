@@ -16,8 +16,16 @@ b = np.random.randn(m)
 x = cp.Variable(n, integer=True)
 objective = cp.Minimize(cp.sum_squares(A @ x - b))
 prob = cp.Problem(objective)
+
+
+# Save timestamp
+start = time.time()
 print("MIQP is solving .......")
 prob.solve()
+
+# Save timestamp
+end = time.time()
+print("total calculating time: ",end - start)
 
 
 print("Status: ", prob.status)

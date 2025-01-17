@@ -45,9 +45,12 @@ public class DroneLoadController: MonoBehaviour
     
     [Header("Trajectories")]
     public bool AttackTheBuoy = false;
+
+    public bool ContinueTrajectory = false; // ContinueMinimumSnapTrajectory
     public bool Figure8 = false;
     public bool LogTrajectory = false;
     public bool Helix = false;
+    public bool RepeatTest = false;
     private double TrajectoryStartTime = 0;
     private double CatchStartTime = 0; // for CatchStartTime start time
     
@@ -105,12 +108,18 @@ public class DroneLoadController: MonoBehaviour
     double catching_time = 3; 
     double forward_time = 0.5; 
     double lifting_time = 3; 
-
+    
     Vector<double> x_s_d_last; // waiting amd aiming
 
     double Tp = 0; // progress_time
 
-    int spaceBarPressCount = 0;
+    // Continuous Min snap trajectory
+    private List<double[]> trajectoryCoefficients_x; // To store coefficients for each trajectory segment
+    private List<double[]> trajectoryCoefficients_y; // To store coefficients for each trajectory segment
+    private List<double[]> trajectoryCoefficients_z; // To store coefficients for each trajectory segment
+    private List<double> MST_time_stamp; // To store time stamps for each waypoint
+    
+    //int spaceBarPressCount = 0;
     
     // Downward air flow
     // public float smallRadius = 0.5f;
@@ -207,18 +216,18 @@ public class DroneLoadController: MonoBehaviour
         //float endTime = Time.realtimeSinceStartup;
         //Debug.Log($"Execution Time: {(endTime - startTime) * 1000} ms");
         ApplyRPMs();
-        // Check if space bar is pressed
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            spaceBarPressCount++;
-            Debug.Log($"Space Bar Pressed: {spaceBarPressCount} times");
-            // Check if the space bar press threshold is met
-            if (spaceBarPressCount >= 3)
-            {
-                ResetScene();
-            }
-        }
 
+        // Check if space bar is pressed
+        // if (Input.GetKeyDown(KeyCode.Space))
+        // {
+        //     spaceBarPressCount++;
+        //     Debug.Log($"Space Bar Pressed: {spaceBarPressCount} times");
+        //     // Check if the space bar press threshold is met
+        //     if (spaceBarPressCount >= 3)
+        //     {
+        //         ResetScene();
+        //     }
+        // }
 	}
 
     private void ResetScene()
@@ -227,7 +236,7 @@ public class DroneLoadController: MonoBehaviour
         Debug.Log("Resetting Scene...");
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         // Reset the counter and space bar press count
-        spaceBarPressCount = 0;
+        //spaceBarPressCount = 0;
         //timer = 0f;
     }
 
@@ -406,8 +415,62 @@ public class DroneLoadController: MonoBehaviour
             TrajectoryStartTime = Time.time;
         }
 
+        // Repeat Test to record average result
+        if (RepeatTest){
+            Debug.Log("Repeat Test...");
+            if(AttackTheBuoy == false)
+            {
+                AttackTheBuoy = true; // start catching    
+            }
+        }
+
         // Minum snap trajectory parameters 
         // double T = 10.0; // Total time for trajectory
+
+        if(ContinueTrajectory && Rope != null)
+        {
+            if(min_snap_flag == 0)
+            {
+                MST_time_stamp = new List<double> { 0, 5, 10 }; // time stamp
+
+                //{1st waypoints, 2nd, 3rd, 4th}    
+                var positionsX = new List<double> { (float)x_s[0], 5, 10 };
+                var velocitiesX = new List<double> { 0, 0, 0 };
+                var accelerationsX = new List<double> { 0, 0, 0 };
+ 
+                var positionsY = new List<double> { (float)x_s[1], 5, 10 };
+                var velocitiesY = new List<double> { 0, 0, 0 };
+                var accelerationsY = new List<double> { 0, 0, 0 };
+
+                var positionsZ = new List<double> { (float)x_s[2], 5, 10 };
+                var velocitiesZ = new List<double> { 0, 0, 0 };
+                var accelerationsZ = new List<double> { 0, 0, 0 };               
+
+                trajectoryCoefficients_x = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsX, velocitiesX, accelerationsX, MST_time_stamp);
+                trajectoryCoefficients_y = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsY, velocitiesY, accelerationsY, MST_time_stamp);
+                trajectoryCoefficients_z = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsZ, velocitiesZ, accelerationsZ, MST_time_stamp);
+                
+                min_snap_flag = 1;
+                CatchStartTime = Time.time; // reset time
+                Debug.Log($"UAV completed trajectory calculation");
+            }
+            if(min_snap_flag == 1)
+            {
+                Tp = Time.time - CatchStartTime;
+
+                if(Tp < catching_time)
+                {
+                    var (posX, velX, accX) = ContinueMinimumSnapTrajectory.EvaluateTrajectory(trajectoryCoefficients_x, MST_time_stamp, Tp);
+                    var (posY, velY, accY) = ContinueMinimumSnapTrajectory.EvaluateTrajectory(trajectoryCoefficients_y, MST_time_stamp, Tp);
+                    var (posZ, velZ, accZ) = ContinueMinimumSnapTrajectory.EvaluateTrajectory(trajectoryCoefficients_z, MST_time_stamp, Tp);
+                    x_s_d = DenseVector.OfArray(new double[] { posX, posY, posZ });
+                    v_s_d = DenseVector.OfArray(new double[] { velX, velY, velZ });
+                    a_s_d = DenseVector.OfArray(new double[] { accX, accY, accZ });
+                    Debug.Log($"UAV is catching.....................{Tp} / {catching_time}"); 
+                }
+            }
+        }
+
 
 
         if(AttackTheBuoy && Rope != null)
@@ -669,6 +732,8 @@ public class DroneLoadController: MonoBehaviour
                     LogTrajectory = false;
                     AttackTheBuoy = false;
                     Debug.Log($"switch to suspended control");
+                    //Debug.Log($"Reset the scene");
+                    //ResetScene();
                 }
                 //   
             }       
@@ -1228,7 +1293,116 @@ public static class MinimumSnapTrajectory
     }
 }
 
+public static class ContinueMinimumSnapTrajectory
+{
+    // Calculate the coefficients for a single trajectory segment
+    public static double[] MinimumSnapCoefficients(double startPos, double startVel, double startAcc,
+                                                   double endPos, double endVel, double endAcc, 
+                                                   double T)
+    {
+        var A = Matrix<double>.Build.DenseOfArray(new double[,]
+        {
+            {1, 0, 0,    0,    0,    0},      
+            {0, 1, 0,    0,    0,    0},      
+            {0, 0, 2,    0,    0,    0},      
+            {1, T, Math.Pow(T, 2), Math.Pow(T, 3), Math.Pow(T, 4), Math.Pow(T, 5)}, 
+            {0, 1, 2*T,  3*Math.Pow(T, 2), 4*Math.Pow(T, 3), 5*Math.Pow(T, 4)},    
+            {0, 0, 2,    6*T,  12*Math.Pow(T, 2), 20*Math.Pow(T, 3)}               
+        });
 
+        var b = Vector<double>.Build.Dense(new double[]
+        {
+            startPos, startVel, startAcc, endPos, endVel, endAcc
+        });
+
+        var x = A.Solve(b);
+
+        return x.ToArray();
+    }
+
+    // Multi-segment trajectory coefficients generator
+    public static List<double[]> GenerateTrajectory(List<double> positions, List<double> velocities, 
+                                                    List<double> accelerations, List<double> times)
+    {
+        if (positions.Count != times.Count || positions.Count < 2)
+            throw new ArgumentException("Positions and times must have the same length and at least 2 points.");
+
+        List<double[]> trajectoryCoefficients = new List<double[]>();
+
+        for (int i = 0; i < positions.Count - 1; i++)
+        {
+            double T = times[i + 1] - times[i];
+            var coeffs = MinimumSnapCoefficients(
+                positions[i], velocities[i], accelerations[i],
+                positions[i + 1], velocities[i + 1], accelerations[i + 1], T
+            );
+            trajectoryCoefficients.Add(coeffs);
+        }
+
+        return trajectoryCoefficients;
+    }
+
+    // Evaluate trajectory for a given time t
+    public static (double position, double velocity, double acceleration) EvaluateTrajectory(
+        List<double[]> coefficients, List<double> times, double t)
+    {
+        if (t < times[0] || t > times[^1])
+            throw new ArgumentException("Time t is out of bounds for the trajectory.");
+
+        // Determine which segment to use
+        int segment = times.Count - 2; // Default to last segment
+        for (int i = 0; i < times.Count - 1; i++)
+        {
+            if (t >= times[i] && t < times[i + 1])
+            {
+                segment = i;
+                break;
+            }
+        }
+
+        double localTime = t - times[segment];
+        var coeffs = coefficients[segment];
+
+        double position = EvaluatePolynomial(coeffs, localTime);
+        double velocity = EvaluatePolynomialDerivative(coeffs, localTime);
+        double acceleration = EvaluatePolynomialSecondDerivative(coeffs, localTime);
+
+        return (position, velocity, acceleration);
+    }    
+
+    // Evaluate the polynomial at a given time t
+    public static double EvaluatePolynomial(double[] coeffs, double t)
+    {
+        double result = 0;
+        for (int i = 0; i < coeffs.Length; i++)
+        {
+            result += coeffs[i] * Math.Pow(t, i);
+        }
+        return result;
+    }
+
+    // Evaluate the first derivative (velocity) of the polynomial at time t
+    public static double EvaluatePolynomialDerivative(double[] coeffs, double t)
+    {
+        double result = 0;
+        for (int i = 1; i < coeffs.Length; i++) // Start at i=1 because the derivative of a0 is 0
+        {
+            result += i * coeffs[i] * Math.Pow(t, i - 1);
+        }
+        return result;
+    }
+
+    // Evaluate the second derivative (acceleration) of the polynomial at time t
+    public static double EvaluatePolynomialSecondDerivative(double[] coeffs, double t)
+    {
+        double result = 0;
+        for (int i = 2; i < coeffs.Length; i++) // Start at i=2 because the second derivative of a0 and a1 is 0
+        {
+            result += i * (i - 1) * coeffs[i] * Math.Pow(t, i - 2);
+        }
+        return result;
+    }
+}
 
 // Examine the impact of the UAV's downward airflow on the rope
 // Usage: 
