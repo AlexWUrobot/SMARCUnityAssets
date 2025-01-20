@@ -458,37 +458,27 @@ public class DroneLoadController: MonoBehaviour
 
 
                 // Hard  constraint : UAV will fly exactly at the desired velocity and acceleration 
-                //trajectoryCoefficients_x = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsX, velocitiesX, accelerationsX, MST_time_stamp);
-                //trajectoryCoefficients_y = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsY, velocitiesY, accelerationsY, MST_time_stamp);
-                //trajectoryCoefficients_z = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsZ, velocitiesZ, accelerationsZ, MST_time_stamp);
+                trajectoryCoefficients_x = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsX, velocitiesX, accelerationsX, MST_time_stamp);
+                trajectoryCoefficients_y = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsY, velocitiesY, accelerationsY, MST_time_stamp);
+                trajectoryCoefficients_z = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsZ, velocitiesZ, accelerationsZ, MST_time_stamp);
                 
                 // Soft constraint
-                double lambda = 1e-1; // Adjust this to control how strictly soft constraints are enforced
-                trajectoryCoefficients_x = ContinueMinimumSnapTrajectory.GenerateTrajectorySoft(positionsX, velocitiesX, accelerationsX, MST_time_stamp, lambda);
-                trajectoryCoefficients_y = ContinueMinimumSnapTrajectory.GenerateTrajectorySoft(positionsY, velocitiesY, accelerationsY, MST_time_stamp, lambda);
-                trajectoryCoefficients_z = ContinueMinimumSnapTrajectory.GenerateTrajectorySoft(positionsZ, velocitiesZ, accelerationsZ, MST_time_stamp, lambda);
-                //Debug.Log($"trajectoryCoefficients_x: {trajectoryCoefficients_x.Count}"); //4
+                // double lambda = 1e-1; // Adjust this to control how strictly soft constraints are enforced
+                // trajectoryCoefficients_x = ContinueMinimumSnapTrajectory.GenerateTrajectorySoft(positionsX, velocitiesX, accelerationsX, MST_time_stamp, lambda);
+                // trajectoryCoefficients_y = ContinueMinimumSnapTrajectory.GenerateTrajectorySoft(positionsY, velocitiesY, accelerationsY, MST_time_stamp, lambda);
+                // trajectoryCoefficients_z = ContinueMinimumSnapTrajectory.GenerateTrajectorySoft(positionsZ, velocitiesZ, accelerationsZ, MST_time_stamp, lambda);
+                // //Debug.Log($"trajectoryCoefficients_x: {trajectoryCoefficients_x.Count}"); //4
 
 
-                // Print all coefficients
-                for (int i = 0; i < trajectoryCoefficients_x.Count; i++)
-                { 
-                    //Debug.Log($"Console Writeline:{i}");
-                    //Console.WriteLine($"Segment {i + 1}: {string.Join(", ", trajectoryCoefficients_x[i])}"); 
-                    Debug.Log($"Segment {i + 1}: {string.Join(", ", trajectoryCoefficients_x[i])}");
+                // // Print all coefficients
+                // for (int i = 0; i < trajectoryCoefficients_x.Count; i++)
+                // { 
+                //     //Debug.Log($"Console Writeline:{i}");
+                //     //Console.WriteLine($"Segment {i + 1}: {string.Join(", ", trajectoryCoefficients_x[i])}"); 
+                //     Debug.Log($"Segment {i + 1}: {string.Join(", ", trajectoryCoefficients_x[i])}");
 
-                }
-                // double[] trajec_x0 = trajectoryCoefficients_x[0];
-                // double[] trajec_x1 = trajectoryCoefficients_x[1];
-                // double[] trajec_x2 = trajectoryCoefficients_x[2];
-                // double[] trajec_x3 = trajectoryCoefficients_x[3];
-            
-                // foreach (double value in trajec_x0)
-                // {
-                //     Debug.Log(value);
                 // }
-                //Debug.Log($"trajectoryCoefficients_x: {trajec_x0},{trajec_x1},{trajec_x2},{trajec_x3}");
-                //Debug.Log(string.Join(", ", trajec_x0,", ", trajec_x1,", ", trajec_x2,", ", trajec_x3));
+
 
                 min_snap_flag = 1;
                 CatchStartTime = Time.time; // reset time
@@ -508,7 +498,7 @@ public class DroneLoadController: MonoBehaviour
                     a_s_d = DenseVector.OfArray(new double[] { accX, accY, accZ });
                     x_s_d_last = x_s_d;
                     //Debug.Log($"UAV is catching.....................{Tp} / {total_MST_time}"); 
-                    Debug.Log($"posX:{posX:F2},velX:{velX:F2},accX:{accX:F2},Tp:{Tp:F2}");
+                    //Debug.Log($"posX:{posX:F2},velX:{velX:F2},accX:{accX:F2},Tp:{Tp:F2}");
                 }else{
                     x_s_d = x_s_d_last;
                     v_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
