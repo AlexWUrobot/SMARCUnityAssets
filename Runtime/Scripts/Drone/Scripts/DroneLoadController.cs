@@ -483,6 +483,7 @@ public class DroneLoadController: MonoBehaviour
                 min_snap_flag = 1;
                 CatchStartTime = Time.time; // reset time
                 Debug.Log($"UAV completed trajectory calculation");
+                LogTrajectory = true;
             }
             if(min_snap_flag == 1)
             {
@@ -497,7 +498,7 @@ public class DroneLoadController: MonoBehaviour
                     v_s_d = DenseVector.OfArray(new double[] { velX, velY, velZ });
                     a_s_d = DenseVector.OfArray(new double[] { accX, accY, accZ });
                     x_s_d_last = x_s_d;
-                    //Debug.Log($"UAV is catching.....................{Tp} / {total_MST_time}"); 
+                    Debug.Log($"UAV is catching.....................{Tp} / {total_MST_time}"); 
                     //Debug.Log($"posX:{posX:F2},velX:{velX:F2},accX:{accX:F2},Tp:{Tp:F2}");
                 }else{
                     x_s_d = x_s_d_last;
