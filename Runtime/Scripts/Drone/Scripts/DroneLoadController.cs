@@ -276,7 +276,6 @@ public class DroneLoadController: MonoBehaviour
         Vector<double> xL_s_d;
         Vector<double> vL_s_d;
         Vector<double> aL_s_d;
-        Vector<double> b1d_d;
         (xL_s_d, vL_s_d, aL_s_d) = TrackingTargetTrajectory(TrackingTargetTF.position.To<ENU>().ToDense(), xL_s, vL_s);
         
         // Figure 8
@@ -288,8 +287,7 @@ public class DroneLoadController: MonoBehaviour
         
         // Helix
         if (Helix) {
-            (xL_s_d, vL_s_d, aL_s_d, b1d_d) = HelixTrajectory(Time.time - TrajectoryStartTime);
-            b1d = b1d_d;
+            (xL_s_d, vL_s_d, aL_s_d, b1d) = HelixTrajectory(Time.time - TrajectoryStartTime);
         }
 
         if (!Figure8 && !Helix) {
@@ -383,7 +381,7 @@ public class DroneLoadController: MonoBehaviour
         Vector<double> x_s_d;
         Vector<double> v_s_d;
         Vector<double> a_s_d;
-        Vector<double> b1d_d;
+        Vector<double> b1d = DenseVector.OfArray(new double[] { Math.Sqrt(2)/2, -Math.Sqrt(2)/2, 0 });
         (x_s_d, v_s_d, a_s_d) = TrackingTargetTrajectory(TrackingTargetTF.position.To<ENU>().ToDense(), x_s, v_s);
 
         // Quadrotor roll pitch yaw
@@ -410,7 +408,7 @@ public class DroneLoadController: MonoBehaviour
 
         // Helix
         if (Helix) {
-            (x_s_d, v_s_d, a_s_d, b1d_d) = HelixTrajectory(Time.time - TrajectoryStartTime);
+            (x_s_d, v_s_d, a_s_d, b1d) = HelixTrajectory(Time.time - TrajectoryStartTime);
         }
 
         if (!Figure8 && !Helix) {
@@ -802,8 +800,6 @@ public class DroneLoadController: MonoBehaviour
             tw.Close();
         }
 
-        Vector<double> b1d = DenseVector.OfArray(new double[] { Math.Sqrt(2)/2, -Math.Sqrt(2)/2, 0 });
-
         // Control
         Vector<double> ex = x_s - x_s_d;
         Vector<double> ev = v_s - v_s_d;
@@ -1061,18 +1057,18 @@ public class DroneLoadController: MonoBehaviour
     }
 
     (Vector<double>, Vector<double>, Vector<double>, Vector<double>) HelixTrajectory(double t) {
-        double t_max = 5;
-        double A = 1;
-        double B = 4;
-        double C = 6;
+        double t_max = 1;
+        double A = 0.4;
+        double B = 0.4;
+        double C = 0.6;
         double freq = Math.PI / t_max;
 
-        Vector<double> x_s_d = DenseVector.OfArray(new double[] { A*t, B*Math.Sin(freq*t),            C*Math.Cos(freq*t) + 10 });
+        Vector<double> x_s_d = DenseVector.OfArray(new double[] { A*t, B*Math.Sin(freq*t),            C*Math.Cos(freq*t) + 1 });
         Vector<double> v_s_d = DenseVector.OfArray(new double[] { A,   B*freq*Math.Cos(freq*t),      -C*freq*Math.Sin(freq*t) });
         Vector<double> a_s_d = DenseVector.OfArray(new double[] { 0,  -B*freq*freq*Math.Sin(freq*t), -C*freq*freq*Math.Cos(freq*t)});
 
-        Vector<double> b1d_d = DenseVector.OfArray(new double[] { Math.Cos(freq*t), Math.Sin(freq*t), 0 });
-        return (x_s_d, v_s_d, a_s_d, b1d_d);
+        Vector<double> b1d = DenseVector.OfArray(new double[] { Math.Cos(freq*t), Math.Sin(freq*t), 0 });
+        return (x_s_d, v_s_d, a_s_d, b1d);
     }
 
     static Vector<double> _Cross(Vector<double> a, Vector<double> b) 
