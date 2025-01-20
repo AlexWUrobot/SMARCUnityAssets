@@ -11,7 +11,7 @@ using Rope;
 
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
-
+using Accord.Math.Optimization;
 using UnityEngine.SceneManagement;
 
 using System.Linq;
@@ -433,7 +433,7 @@ public class DroneLoadController: MonoBehaviour
         {
             if(min_snap_flag == 0)
             {
-                MST_time_stamp = new List<double> { 0, 5, 10, 12, 15}; // time stamp
+                MST_time_stamp = new List<double> { 0, 5, 10, 11, 15}; // time stamp
                 total_MST_time = MST_time_stamp[MST_time_stamp.Count - 1];
 
                 // UAV hovers and aims at the middle of the rope, the rope (Rope.childCount) include 22 segements, 0~21
@@ -454,12 +454,42 @@ public class DroneLoadController: MonoBehaviour
 
                 var positionsZ = new List<double> { (float)x_s[2], (float)p_aim[2], (float)p_catch[2], (float)p_forward[2], (float)p_lift[2]};
                 var velocitiesZ = new List<double> { 0, 0, 0, 0, 0 };
-                var accelerationsZ = new List<double> { 0, 0, 0, 0, 0 };               
+                var accelerationsZ = new List<double> { 0, 0, 0, 0, 0 };     
 
-                trajectoryCoefficients_x = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsX, velocitiesX, accelerationsX, MST_time_stamp);
-                trajectoryCoefficients_y = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsY, velocitiesY, accelerationsY, MST_time_stamp);
-                trajectoryCoefficients_z = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsZ, velocitiesZ, accelerationsZ, MST_time_stamp);
+
+                // Hard  constraint : UAV will fly exactly at the desired velocity and acceleration 
+                //trajectoryCoefficients_x = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsX, velocitiesX, accelerationsX, MST_time_stamp);
+                //trajectoryCoefficients_y = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsY, velocitiesY, accelerationsY, MST_time_stamp);
+                //trajectoryCoefficients_z = ContinueMinimumSnapTrajectory.GenerateTrajectory(positionsZ, velocitiesZ, accelerationsZ, MST_time_stamp);
                 
+                // Soft constraint
+                double lambda = 1e-1; // Adjust this to control how strictly soft constraints are enforced
+                trajectoryCoefficients_x = ContinueMinimumSnapTrajectory.GenerateTrajectorySoft(positionsX, velocitiesX, accelerationsX, MST_time_stamp, lambda);
+                trajectoryCoefficients_y = ContinueMinimumSnapTrajectory.GenerateTrajectorySoft(positionsY, velocitiesY, accelerationsY, MST_time_stamp, lambda);
+                trajectoryCoefficients_z = ContinueMinimumSnapTrajectory.GenerateTrajectorySoft(positionsZ, velocitiesZ, accelerationsZ, MST_time_stamp, lambda);
+                //Debug.Log($"trajectoryCoefficients_x: {trajectoryCoefficients_x.Count}"); //4
+
+
+                // Print all coefficients
+                for (int i = 0; i < trajectoryCoefficients_x.Count; i++)
+                { 
+                    //Debug.Log($"Console Writeline:{i}");
+                    //Console.WriteLine($"Segment {i + 1}: {string.Join(", ", trajectoryCoefficients_x[i])}"); 
+                    Debug.Log($"Segment {i + 1}: {string.Join(", ", trajectoryCoefficients_x[i])}");
+
+                }
+                // double[] trajec_x0 = trajectoryCoefficients_x[0];
+                // double[] trajec_x1 = trajectoryCoefficients_x[1];
+                // double[] trajec_x2 = trajectoryCoefficients_x[2];
+                // double[] trajec_x3 = trajectoryCoefficients_x[3];
+            
+                // foreach (double value in trajec_x0)
+                // {
+                //     Debug.Log(value);
+                // }
+                //Debug.Log($"trajectoryCoefficients_x: {trajec_x0},{trajec_x1},{trajec_x2},{trajec_x3}");
+                //Debug.Log(string.Join(", ", trajec_x0,", ", trajec_x1,", ", trajec_x2,", ", trajec_x3));
+
                 min_snap_flag = 1;
                 CatchStartTime = Time.time; // reset time
                 Debug.Log($"UAV completed trajectory calculation");
@@ -477,7 +507,8 @@ public class DroneLoadController: MonoBehaviour
                     v_s_d = DenseVector.OfArray(new double[] { velX, velY, velZ });
                     a_s_d = DenseVector.OfArray(new double[] { accX, accY, accZ });
                     x_s_d_last = x_s_d;
-                    Debug.Log($"UAV is catching.....................{Tp} / {total_MST_time}"); 
+                    //Debug.Log($"UAV is catching.....................{Tp} / {total_MST_time}"); 
+                    Debug.Log($"posX:{posX:F2},velX:{velX:F2},accX:{accX:F2},Tp:{Tp:F2}");
                 }else{
                     x_s_d = x_s_d_last;
                     v_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
@@ -1424,6 +1455,81 @@ public static class ContinueMinimumSnapTrajectory
         }
         return result;
     }
+
+    // Existing methods are unchanged.
+
+    // Calculate the coefficients for a single trajectory segment with soft constraints
+    public static double[] MinimumSnapSoftConstraints(double startPos, double startVel, double startAcc,
+                                                      double endPos, double endVel, double endAcc, 
+                                                      double T, double lambda)
+    {
+        int degree = 5; // Degree of the polynomial (quintic)
+        int numCoeffs = degree + 1;
+
+        // Objective matrix for snap minimization (Q)
+        var Q = Matrix<double>.Build.DenseOfArray(new double[,]
+        {
+            {0, 0, 0, 0, 0, 0}, 
+            {0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 36, 0, 0},
+            {0, 0, 0, 0, 192, 0},
+            {0, 0, 0, 0, 0, 720},
+        });
+        Q *= T;
+
+        // Constraints (A_eq * x = b_eq)
+        var A_eq = Matrix<double>.Build.DenseOfArray(new double[,]
+        {
+            {1, 0, 0,    0,    0,    0},      
+            {0, 1, 0,    0,    0,    0},      
+            {0, 0, 2,    0,    0,    0},      
+            {1, T, Math.Pow(T, 2), Math.Pow(T, 3), Math.Pow(T, 4), Math.Pow(T, 5)}, 
+            {0, 1, 2*T,  3*Math.Pow(T, 2), 4*Math.Pow(T, 3), 5*Math.Pow(T, 4)},    
+            {0, 0, 2,    6*T,  12*Math.Pow(T, 2), 20*Math.Pow(T, 3)}               
+        });
+        var b_eq = Vector<double>.Build.Dense(new double[] { startPos, startVel, startAcc, endPos, endVel, endAcc });
+
+        // Soft constraints weights (lambda controls how strongly soft constraints are enforced)
+        var P = Q + lambda * Matrix<double>.Build.DenseIdentity(numCoeffs);
+
+        // Solve the quadratic program: minimize (1/2) * x^T * P * x subject to A_eq * x = b_eq
+        var qpSolver = new GoldfarbIdnani(
+            P.ToArray(), 
+            Vector<double>.Build.Dense(numCoeffs).ToArray(),
+            A_eq.ToArray(), 
+            b_eq.ToArray());
+
+        bool success = qpSolver.Minimize();
+
+        if (!success)
+            throw new Exception("Quadratic programming solver failed!");
+
+        return qpSolver.Solution;
+    }
+
+    // Overload for multi-segment trajectory generation with soft constraints
+    public static List<double[]> GenerateTrajectorySoft(List<double> positions, List<double> velocities, 
+                                                        List<double> accelerations, List<double> times,
+                                                        double lambda)
+    {
+        if (positions.Count != times.Count || positions.Count < 2)
+            throw new ArgumentException("Positions and times must have the same length and at least 2 points.");
+
+        List<double[]> trajectoryCoefficients = new List<double[]>();
+
+        for (int i = 0; i < positions.Count - 1; i++)
+        {
+            double T = times[i + 1] - times[i];
+            var coeffs = MinimumSnapSoftConstraints(
+                positions[i], velocities[i], accelerations[i],
+                positions[i + 1], velocities[i + 1], accelerations[i + 1], T, lambda
+            );
+            trajectoryCoefficients.Add(coeffs);
+        }
+
+        return trajectoryCoefficients;
+    }    
 }
 
 // Examine the impact of the UAV's downward airflow on the rope
