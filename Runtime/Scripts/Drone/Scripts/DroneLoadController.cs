@@ -45,12 +45,14 @@ public class DroneLoadController: MonoBehaviour
     
     [Header("Trajectories")]
     public bool AttackTheBuoy = false;
-
     public bool ContinueTrajectory = false; // ContinueMinimumSnapTrajectory
     public bool Figure8 = false;
     public bool LogTrajectory = false;
     public bool Helix = false;
-    public bool RepeatTest = false;
+    public bool RepeatTest = false;   // start repeat test for 20 times, why true cannot work?
+    
+
+    
     private double TrajectoryStartTime = 0;
     private double CatchStartTime = 0; // for CatchStartTime start time
     
@@ -69,6 +71,7 @@ public class DroneLoadController: MonoBehaviour
     int times2 = 0;
 
     int rope_insideWindCount = 0;
+    int repeat_simulation_ith = 0; // how many times to repeat the simulation
 
     ////////////////// SYSTEM SPECIFIC //////////////////
     // Quadrotor parameters
@@ -120,8 +123,12 @@ public class DroneLoadController: MonoBehaviour
     private List<double[]> trajectoryCoefficients_y; // To store coefficients for each trajectory segment
     private List<double[]> trajectoryCoefficients_z; // To store coefficients for each trajectory segment
     private List<double> MST_time_stamp; // To store time stamps for each waypoint
+
+    private List<double> timeList = new List<double>(); // To store time for downward airflow
+    private List<int> countList = new List<int>(); // To store rope_insideWindCount
+
     
-    //int spaceBarPressCount = 0;
+    int spaceBarPressCount = 0;
     
     // Downward air flow
     // public float smallRadius = 0.5f;
@@ -134,7 +141,10 @@ public class DroneLoadController: MonoBehaviour
 
     // Logging
     string filePath = Application.dataPath + "/../../SMARCUnityAssets/Logs/log.csv";
+    string filePath2 = Application.dataPath + "/../../SMARCUnityAssets/Logs/log_repeat.csv"; // for repeat training
     TextWriter tw;
+    TextWriter tw2;
+
 
 	// Use this for initialization
 	void Start() 
@@ -208,6 +218,12 @@ public class DroneLoadController: MonoBehaviour
         tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3,insideCount");
         tw.Close();
 
+        tw2 = new StreamWriter(filePath2, false);
+        tw2.WriteLine("repeat_simulation_ith, dist_between_rope_and_UAV, wind_field");
+        tw2.Close();
+
+
+        RepeatTest = true; // start repeating test
 	}
 	
 	// Update is called once per frame
@@ -220,16 +236,16 @@ public class DroneLoadController: MonoBehaviour
         ApplyRPMs();
 
         // Check if space bar is pressed
-        // if (Input.GetKeyDown(KeyCode.Space))
-        // {
-        //     spaceBarPressCount++;
-        //     Debug.Log($"Space Bar Pressed: {spaceBarPressCount} times");
-        //     // Check if the space bar press threshold is met
-        //     if (spaceBarPressCount >= 3)
-        //     {
-        //         ResetScene();
-        //     }
-        // }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            spaceBarPressCount++;
+            Debug.Log($"Space Bar Pressed: {spaceBarPressCount} times");
+            // Check if the space bar press threshold is met
+            if (spaceBarPressCount >= 3)
+            {
+                ResetScene();
+            }
+        }
 	}
 
     private void ResetScene()
@@ -417,11 +433,27 @@ public class DroneLoadController: MonoBehaviour
 
         // Repeat Test to record average result
         if (RepeatTest){
-            Debug.Log("Repeat Test...");
-            if(AttackTheBuoy == false)
+            if(ContinueTrajectory == false && repeat_simulation_ith < 20)   // 20 times
             {
-                AttackTheBuoy = true; // start catching    
+                repeat_simulation_ith = repeat_simulation_ith + 1;
+                Debug.Log($"Repeat Test.....................................{repeat_simulation_ith}");
+                if(repeat_simulation_ith>=2)
+                {   
+                    Debug.Log($"Reset the scene");
+                    ResetScene();
+                    // Create New log
+                    filePath = Application.dataPath + "/../../SMARCUnityAssets/Logs/log"+$"{repeat_simulation_ith-1}"+".csv"; // New files log2, log3...
+                    tw = new StreamWriter(filePath, false);
+                    tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3,insideCount");
+                    tw.Close();
+                }
+                // start simulation 
+                ContinueTrajectory = true;
             }
+            // if(AttackTheBuoy == false)
+            // {
+            //     AttackTheBuoy = true; // start catching    
+            // }
         }
 
         // Minum snap trajectory parameters 
@@ -429,6 +461,13 @@ public class DroneLoadController: MonoBehaviour
 
         if(ContinueTrajectory && Rope != null)
         {
+            Vector<double> rope_s = BaseLink.transform.position.To<ENU>().ToDense();
+            Vector<double> UAV_s = Rope.GetChild(20).position.To<ENU>().ToDense();
+            double dist_between_rope_and_UAV = (rope_s - UAV_s).Norm(2);
+            //Debug.Log($"rope_s:{rope_s[0]:F2},{rope_s[1]:F2},{rope_s[2]:F2}");
+            //Debug.Log($"UAV_s:{UAV_s[0]:F2},{UAV_s[1]:F2},{UAV_s[2]:F2}");
+            //Debug.Log($"dist_between_rope_and_UAV:{dist_between_rope_and_UAV}"); // smaller than 0.22, can be seen as catched successfully
+
             if(min_snap_flag == 0)
             {
                 MST_time_stamp = new List<double> { 0, 5, 10, 11, 15}; // time stamp
@@ -436,6 +475,8 @@ public class DroneLoadController: MonoBehaviour
 
                 // UAV hovers and aims at the middle of the rope, the rope (Rope.childCount) include 22 segements, 0~21
                 Vector3<ENU> endPosENU = 0.5f*(LoadLinkTF.position + Rope.GetChild(20).position).To<ENU>();
+
+                //Debug.Log($"Rope Count:{Rope.childCount}");
                 Vector3 p_aim = new Vector3(endPosENU.x-3, endPosENU.y, endPosENU.z+3);  // 1st aiming
                 Vector3 p_catch = new Vector3(endPosENU.x - 0.05f, endPosENU.y, endPosENU.z - 0.1f);   // 2nd catch 
                 Vector3 p_forward = new Vector3(endPosENU.x + 1.0f, endPosENU.y, endPosENU.z - 0.1f); // 3rd move forward
@@ -503,8 +544,23 @@ public class DroneLoadController: MonoBehaviour
                     v_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
                     a_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
 
-                    Debug.Log($"UAV complete catching, stay in the last point");
+                    Debug.Log($"UAV complete catching, stay in the last point {Tp} / {total_MST_time}");
                     LogTrajectory = false;
+
+                    if(RepeatTest == true && Tp > total_MST_time + 5)   
+                    {   // end mission and record and reset the scene
+                        ContinueTrajectory = false;
+                        
+                        // tw2.WriteLine("repeat_simulation_ith, dist_between_rope_and_UAV, wind_field");
+                        double resultIntegral = ComputeIntegral(timeList, countList, 5.0, 10.0);  // calcualte rope in the downward wind between 5.0~10.0
+                        // after integral, clean two lists
+                        timeList.Clear();
+                        countList.Clear();
+                        
+                        tw2 = new StreamWriter(filePath2, true);
+                        tw2.WriteLine($"{repeat_simulation_ith},{dist_between_rope_and_UAV},{resultIntegral}");
+                        tw2.Close();
+                    }
                 }
             }
         }
@@ -794,6 +850,8 @@ public class DroneLoadController: MonoBehaviour
             //tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]}");
             if(ContinueTrajectory == true)
             {
+                timeList.Add(Tp); // why cannot add?  you need to new List <double>()
+                countList.Add(rope_insideWindCount);
                 tw.WriteLine($"{Tp},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]},{propellers_rpms[0]},{propellers_rpms[1]},{propellers_rpms[2]},{propellers_rpms[3]},{rollRad},{pitchRad},{yawRad},{v_s[0]},{v_s[1]},{v_s[2]},{v_s_d[0]},{v_s_d[1]},{v_s_d[2]},{rope_insideWindCount}");
             }else{
                 tw.WriteLine($"{Time.time},{x_s[0]},{x_s[1]},{x_s[2]},{x_s_d[0]},{x_s_d[1]},{x_s_d[2]},{propellers_rpms[0]},{propellers_rpms[1]},{propellers_rpms[2]},{propellers_rpms[3]},{rollRad},{pitchRad},{yawRad},{v_s[0]},{v_s[1]},{v_s[2]},{v_s_d[0]},{v_s_d[1]},{v_s_d[2]},{rope_insideWindCount}");
@@ -895,8 +953,8 @@ public class DroneLoadController: MonoBehaviour
         //x_s = Rope.GetChild(Rope.childCount-1).position.To<ENU>().ToDense();
         //Debug.Log($"RopeCount: {Rope.childCount}");
         //Debug.Log($"Rope: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}");    // 0, 2.75, 0
-        //x_s = Rope.GetChild(7).position.To<ENU>().ToDense();
-        //Debug.Log($"Rope10: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}");    // 0, 1.65, 0     // 0, 0.65, 0
+        //x_s = Rope.GetChild(7).position.To<ENU>().ToDense();         //  Seg0            Seg 10          Seg 20,  0 is closer to the boat 0~2.65
+        //Debug.Log($"Rope10: {x_s[0]:F2},{x_s[1]:F2},{x_s[2]:F2}");    //  0, 0.65, 0  // 0, 1.65, 0     // 0, 2.65, 0
 
          // Rope has 20 child objects
         int numPoints = Rope.childCount;
@@ -1268,6 +1326,30 @@ public class DroneLoadController: MonoBehaviour
     //     }
     // }
 
+
+    double ComputeIntegral(List<double> timeList, List<int> countList, double lowerBound, double upperBound)
+    {
+        // Filter data for integration range
+        var filteredData = timeList
+            .Select((time, index) => new { Time = time, Count = countList[index] })
+            .Where(data => data.Time >= lowerBound && data.Time <= upperBound)
+            .ToList();
+
+        // Perform numerical integration using the trapezoidal rule
+        double integral = 0.0;
+        for (int i = 1; i < filteredData.Count; i++)
+        {
+            double t1 = filteredData[i - 1].Time;
+            double t2 = filteredData[i].Time;
+            int c1 = filteredData[i - 1].Count;
+            int c2 = filteredData[i].Count;
+
+            // Trapezoidal area
+            integral += (t2 - t1) * (c1 + c2) / 2.0;
+        }
+
+        return integral;
+    }
 
 }
 
