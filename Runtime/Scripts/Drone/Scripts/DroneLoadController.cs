@@ -439,7 +439,7 @@ public class DroneLoadController: MonoBehaviour
                 Vector3 p_aim = new Vector3(endPosENU.x-3, endPosENU.y, endPosENU.z+3);  // 1st aiming
                 Vector3 p_catch = new Vector3(endPosENU.x - 0.05f, endPosENU.y, endPosENU.z - 0.1f);   // 2nd catch 
                 Vector3 p_forward = new Vector3(endPosENU.x + 1.0f, endPosENU.y, endPosENU.z - 0.1f); // 3rd move forward
-                Vector3 p_lift = new Vector3(endPosENU.x + 1.5f, endPosENU.y, endPosENU.z+3); // 4th lift
+                Vector3 p_lift = new Vector3(endPosENU.x + 1.2f, endPosENU.y, endPosENU.z+1.5f); // 4th lift
                 
                 //{1st waypoints, 2nd, 3rd, 4th}    
                 var positionsX = new List<double> { (float)x_s[0], (float)p_aim[0], (float)p_catch[0], (float)p_forward[0], (float)p_lift[0]};
