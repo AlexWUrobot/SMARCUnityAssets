@@ -34,7 +34,7 @@ v_s_d3 = df['v_s_d3']
 insideCount = df['insideCount']
 
 vertical_dashline_turn_on = True
-MST_time_stamp = [5, 10, 12, 15] # Timestamps for dashed lines
+MST_time_stamp = [5, 10, 11, 15] # Timestamps for dashed lines
 stage = ["aim","catch", "forward", "lift"]  # Annotations for each stage
 integral_start_time = MST_time_stamp[0]
 integral_end_time   = MST_time_stamp[1]

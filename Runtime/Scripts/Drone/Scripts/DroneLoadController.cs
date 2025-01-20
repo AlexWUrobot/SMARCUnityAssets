@@ -437,13 +437,13 @@ public class DroneLoadController: MonoBehaviour
                 // UAV hovers and aims at the middle of the rope, the rope (Rope.childCount) include 22 segements, 0~21
                 Vector3<ENU> endPosENU = 0.5f*(LoadLinkTF.position + Rope.GetChild(20).position).To<ENU>();
                 Vector3 p_aim = new Vector3(endPosENU.x-3, endPosENU.y, endPosENU.z+3);  // 1st aiming
-                Vector3 p_catch = new Vector3(endPosENU.x - 0.05f, endPosENU.y, endPosENU.z);   // 2nd catch 
-                Vector3 p_forward = new Vector3(endPosENU.x + 1.0f, endPosENU.y, endPosENU.z - 0.3f); // 3rd move forward
+                Vector3 p_catch = new Vector3(endPosENU.x - 0.05f, endPosENU.y, endPosENU.z - 0.1f);   // 2nd catch 
+                Vector3 p_forward = new Vector3(endPosENU.x + 1.0f, endPosENU.y, endPosENU.z - 0.1f); // 3rd move forward
                 Vector3 p_lift = new Vector3(endPosENU.x + 1.5f, endPosENU.y, endPosENU.z+3); // 4th lift
                 
                 //{1st waypoints, 2nd, 3rd, 4th}    
                 var positionsX = new List<double> { (float)x_s[0], (float)p_aim[0], (float)p_catch[0], (float)p_forward[0], (float)p_lift[0]};
-                var velocitiesX = new List<double> { 0, 0, 0, 0, 0 };
+                var velocitiesX = new List<double> { 0, 0, 1, 1, 0 };
                 var accelerationsX = new List<double> { 0, 0, 0, 0, 0 };
  
                 var positionsY = new List<double> { (float)x_s[1], (float)p_aim[1], (float)p_catch[1], (float)p_forward[1], (float)p_lift[1]};
@@ -504,6 +504,7 @@ public class DroneLoadController: MonoBehaviour
                     a_s_d = DenseVector.OfArray(new double[] { 0, 0, 0 });
 
                     Debug.Log($"UAV complete catching, stay in the last point");
+                    LogTrajectory = false;
                 }
             }
         }
