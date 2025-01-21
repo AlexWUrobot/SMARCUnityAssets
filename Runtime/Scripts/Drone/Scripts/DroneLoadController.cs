@@ -76,6 +76,8 @@ public class DroneLoadController: MonoBehaviour
     int rope_insideWindCount = 0;
     private int repeat_simulation_ith = 0; // how many times to repeat the simulation
 
+    bool CompleteFlight = false;
+
     ////////////////// SYSTEM SPECIFIC //////////////////
     // Quadrotor parameters
     double mQ;
@@ -145,8 +147,10 @@ public class DroneLoadController: MonoBehaviour
     // Logging
     string filePath = Application.dataPath + "/../../SMARCUnityAssets/Logs/log.csv";
     string filePath2 = Application.dataPath + "/../../SMARCUnityAssets/Logs/log_repeat.csv"; // for repeat training
+    string filePath3 = "/home/lifan/colcon_ws/src/smarc2/simulation/SMARCUnityAssets/Logs/repeat_simulation_ith.csv";
     TextWriter tw;
     TextWriter tw2;
+
 
 
     private void Awake()
@@ -156,12 +160,7 @@ public class DroneLoadController: MonoBehaviour
         {
             Debug.Log(" Prevent destruction on scene reload..");
             instance = this;
-            // Detach from parent before marking as persistent
-            if (transform.parent != null)
-            {
-                transform.SetParent(null);
-            }
-            DontDestroyOnLoad(gameObject);  // Prevent destruction on scene reload
+            //DontDestroyOnLoad(gameObject);  // Prevent destruction on scene reload
 
         }
         else
@@ -252,6 +251,11 @@ public class DroneLoadController: MonoBehaviour
 
 
         RepeatTest = true; // start repeating
+
+        //filePath3
+        Debug.Log($"{filePath3}");
+        repeat_simulation_ith = ReadVariable(filePath3);
+        Debug.Log($"repeat times: {repeat_simulation_ith}");
 	}
 	
 	// Update is called once per frame
@@ -464,8 +468,14 @@ public class DroneLoadController: MonoBehaviour
             if(ContinueTrajectory == false && repeat_simulation_ith < 20)   // 20 times
             {
                 repeat_simulation_ith = repeat_simulation_ith + 1;
+                Debug.Log($"where stops 1 ");
+
+                tw2 = new StreamWriter(filePath3, false); // overwrite
+                tw2.WriteLine($"{repeat_simulation_ith}");
+                tw2.Close();
+
                 Debug.Log($"Repeat Test.....................................{repeat_simulation_ith}");
-                if(repeat_simulation_ith>=2)
+                if(repeat_simulation_ith>=2 && CompleteFlight == true)  // Add condtion to prevent infinite loop 
                 {   
                     Debug.Log($"Reset the scene");
                     ResetScene();
@@ -578,6 +588,7 @@ public class DroneLoadController: MonoBehaviour
                     if(RepeatTest == true && Tp > total_MST_time + 5)   
                     {   // end mission and record and reset the scene
                         ContinueTrajectory = false;
+                        CompleteFlight = true;  // for reset scene
                         
                         // tw2.WriteLine("repeat_simulation_ith, dist_between_rope_and_UAV, wind_field");
                         double resultIntegral = ComputeIntegral(timeList, countList, 5.0, 10.0);  // calcualte rope in the downward wind between 5.0~10.0
@@ -1379,6 +1390,41 @@ public class DroneLoadController: MonoBehaviour
         return integral;
     }
 
+
+
+    int ReadVariable(string filePathX)
+    {
+        // Check if the file exists
+        if (!File.Exists(filePathX))
+        {
+            Debug.Log($"File not found: {filePathX}");
+            return 0; // Return a default value if the file does not exist
+        }
+
+        try
+        {
+            using (StreamReader reader = new StreamReader(filePathX))
+            {
+                string value = reader.ReadLine(); // Read the first line of data (no header skipping)
+
+                // Try to parse the value into an integer
+                if (int.TryParse(value, out int result))
+                {
+                    return result;
+                }
+                else
+                {
+                    Debug.Log($"Invalid data in file: {value}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.Log($"Error reading file: {ex.Message}");
+        }
+
+        return 0; // Default value in case of error
+    }
 }
 
 
