@@ -17,6 +17,8 @@ using UnityEngine.SceneManagement;
 using System.Linq;
 public class DroneLoadController: MonoBehaviour 
 {
+    private static DroneLoadController instance;  // Singleton instance for persistence
+
     [Header("Basics")]
     [Tooltip("Baselink of the drone")]
     public GameObject BaseLink;
@@ -29,6 +31,7 @@ public class DroneLoadController: MonoBehaviour
     // public float MaxAccelerationWithTrackingTarget = 1f;
     public float DecelerationDistance = 1f;
 
+    
     [Header("Tracking")]
     [Tooltip("An object to follow")]
     public Transform TrackingTargetTF;
@@ -71,7 +74,7 @@ public class DroneLoadController: MonoBehaviour
     int times2 = 0;
 
     int rope_insideWindCount = 0;
-    int repeat_simulation_ith = 0; // how many times to repeat the simulation
+    private int repeat_simulation_ith = 0; // how many times to repeat the simulation
 
     ////////////////// SYSTEM SPECIFIC //////////////////
     // Quadrotor parameters
@@ -144,6 +147,31 @@ public class DroneLoadController: MonoBehaviour
     string filePath2 = Application.dataPath + "/../../SMARCUnityAssets/Logs/log_repeat.csv"; // for repeat training
     TextWriter tw;
     TextWriter tw2;
+
+
+    private void Awake()
+    {
+        // Singleton pattern to ensure one instance persists
+        if (instance == null)
+        {
+            Debug.Log(" Prevent destruction on scene reload..");
+            instance = this;
+            // Detach from parent before marking as persistent
+            if (transform.parent != null)
+            {
+                transform.SetParent(null);
+            }
+            DontDestroyOnLoad(gameObject);  // Prevent destruction on scene reload
+
+        }
+        else
+        {
+            Debug.Log(" Destroy duplicate instances..");
+            Destroy(gameObject);  // Destroy duplicate instances
+            return;
+        }
+    }
+
 
 
 	// Use this for initialization
@@ -223,7 +251,7 @@ public class DroneLoadController: MonoBehaviour
         tw2.Close();
 
 
-        RepeatTest = true; // start repeating test
+        RepeatTest = true; // start repeating
 	}
 	
 	// Update is called once per frame
