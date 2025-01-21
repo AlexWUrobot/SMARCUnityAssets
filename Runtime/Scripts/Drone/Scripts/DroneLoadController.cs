@@ -76,7 +76,6 @@ public class DroneLoadController: MonoBehaviour
     int rope_insideWindCount = 0;
     private int repeat_simulation_ith = 0; // how many times to repeat the simulation
 
-    bool CompleteFlight = false;
 
     ////////////////// SYSTEM SPECIFIC //////////////////
     // Quadrotor parameters
@@ -475,16 +474,15 @@ public class DroneLoadController: MonoBehaviour
                 tw2.Close();
 
                 Debug.Log($"Repeat Test.....................................{repeat_simulation_ith}");
-                if(repeat_simulation_ith>=2 && CompleteFlight == true)  // Add condtion to prevent infinite loop 
-                {   
-                    Debug.Log($"Reset the scene");
-                    ResetScene();
-                    // Create New log
-                    filePath = Application.dataPath + "/../../SMARCUnityAssets/Logs/log"+$"{repeat_simulation_ith-1}"+".csv"; // New files log2, log3...
-                    tw = new StreamWriter(filePath, false);
-                    tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3,insideCount");
-                    tw.Close();
-                }
+                //if(repeat_simulation_ith>=2 && CompleteFlight == true)  // Add condtion to prevent infinite loop 
+                //{   
+
+                // Create New log
+                filePath = Application.dataPath + "/../../SMARCUnityAssets/Logs/log"+$"{repeat_simulation_ith-1}"+".csv"; // New files log2, log3...
+                tw = new StreamWriter(filePath, false);
+                tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3,insideCount");
+                tw.Close();
+                //}
                 // start simulation 
                 ContinueTrajectory = true;
             }
@@ -588,7 +586,6 @@ public class DroneLoadController: MonoBehaviour
                     if(RepeatTest == true && Tp > total_MST_time + 5)   
                     {   // end mission and record and reset the scene
                         ContinueTrajectory = false;
-                        CompleteFlight = true;  // for reset scene
                         
                         // tw2.WriteLine("repeat_simulation_ith, dist_between_rope_and_UAV, wind_field");
                         double resultIntegral = ComputeIntegral(timeList, countList, 5.0, 10.0);  // calcualte rope in the downward wind between 5.0~10.0
@@ -599,6 +596,9 @@ public class DroneLoadController: MonoBehaviour
                         tw2 = new StreamWriter(filePath2, true);
                         tw2.WriteLine($"{repeat_simulation_ith},{dist_between_rope_and_UAV},{resultIntegral}");
                         tw2.Close();
+
+                        Debug.Log($"Reset the scene");
+                        ResetScene();
                     }
                 }
             }
