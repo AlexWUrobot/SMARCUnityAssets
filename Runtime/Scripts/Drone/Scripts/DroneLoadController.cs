@@ -249,7 +249,7 @@ public class DroneLoadController: MonoBehaviour
         tw2.Close();
 
 
-        RepeatTest = true; // start repeating
+        RepeatTest = false; // start repeating   // default close
 
         //filePath3
         Debug.Log($"{filePath3}");
