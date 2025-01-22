@@ -208,12 +208,13 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
 # Plot the trajectories
+ax.scatter(x_s1[0], x_s2[0], x_s3[0], color='green', label='Start Point', marker = 'o')
 ax.plot(x_s1, x_s2, x_s3, color='blue', label='Real Trajectory')
 #ax.plot(x_s_d1, x_s_d2, x_s_d3, color='red', label='Destination Trajectory', marker = 'o')
-ax.scatter(x_s_d1, x_s_d2, x_s_d3, c='red', label='Desired Points')
+ax.plot(x_s_d1, x_s_d2, x_s_d3, c='red', label='Desired Trajectory')
 
 # # Set labels and title
-ax.set_title('3D Plot of Real and Desired Points')
+# ax.set_title('3D Plot of Real and Desired Points')
 ax.set_xlabel('X Axis (m)')
 ax.set_ylabel('Y Axis (m)')
 ax.set_zlabel('Z Axis (m)')

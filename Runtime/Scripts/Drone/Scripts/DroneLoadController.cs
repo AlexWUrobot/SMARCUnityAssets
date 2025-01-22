@@ -1147,9 +1147,9 @@ public class DroneLoadController: MonoBehaviour
         double C = 2;
         double freq = 2 * Math.PI / t_max;
 
-        Vector<double> x_s_d = DenseVector.OfArray(new double[] { A*Math.Sin(freq*t), B*Math.Sin(2*freq*t), C*Math.Sin(freq*t) + 6 });
-        Vector<double> v_s_d = DenseVector.OfArray(new double[] { A*freq*Math.Cos(freq*t), 2*B*freq*Math.Cos(2*freq*t), C*freq*Math.Cos(freq*t) });
-        Vector<double> a_s_d = DenseVector.OfArray(new double[] { -A*freq*freq*Math.Sin(freq*t), -4*B*freq*freq*Math.Sin(2*freq*t), -C*freq*freq*Math.Sin(freq*t) });
+        Vector<double> x_s_d = DenseVector.OfArray(new double[] { A*Math.Sin(freq*t), B*Math.Sin(2*freq*t), -C*Math.Sin(freq*t) + 6 });
+        Vector<double> v_s_d = DenseVector.OfArray(new double[] { A*freq*Math.Cos(freq*t), 2*B*freq*Math.Cos(2*freq*t), -C*freq*Math.Cos(freq*t) });
+        Vector<double> a_s_d = DenseVector.OfArray(new double[] { -A*freq*freq*Math.Sin(freq*t), -4*B*freq*freq*Math.Sin(2*freq*t), C*freq*freq*Math.Sin(freq*t) });
 
         return (x_s_d, v_s_d, a_s_d);
     }
