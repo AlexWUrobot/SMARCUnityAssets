@@ -67,7 +67,7 @@ plt.plot(t, x_s_d3, label='x_s_d3')
 plt.ylabel("z-axis meter")
 plt.xlabel("time (s)")
 plt.legend()
-
+plt.tight_layout()
 
 plt.figure(2)
 plt.subplot(3, 1, 1)
@@ -91,7 +91,7 @@ plt.plot(t, x_s3-x_s_d3, label='z_error')
 plt.ylabel("meter")
 plt.xlabel("time (s)")
 plt.legend()
-
+plt.tight_layout()
 ########################################## Velocity
 
 plt.figure(3)
@@ -131,7 +131,7 @@ plt.plot(t, v_s_d3, label='desired_v_z')
 plt.ylabel("z-axis meter/sec")
 plt.xlabel("time (s)")
 plt.legend()
-
+plt.tight_layout()
 ########################################## RPM
 
 plt.figure(4)
@@ -161,6 +161,7 @@ plt.plot(t, propellers_rpms4, label='rotor 4')
 plt.ylabel("rpm")
 plt.xlabel("time (s)")
 plt.legend()
+plt.tight_layout()
 
 ########################################## Attitude and Wind
 
@@ -185,7 +186,7 @@ plt.plot(t, insideCount, label='Rope inside wind')
 plt.ylabel("Count")
 plt.xlabel("time (s)")
 plt.legend()
-
+plt.tight_layout()
 
 if vertical_dashline_turn_on == True:
     # Add vertical dashed lines with annotations
@@ -220,6 +221,7 @@ ax.set_zlabel('Z Axis (m)')
 
 # Show legend
 ax.legend()
-
-
+#plt.tight_layout()
+# Adjust subplot parameters manually
+plt.subplots_adjust(left=0, right=1, top=0.95, bottom=0.05)
 plt.show()

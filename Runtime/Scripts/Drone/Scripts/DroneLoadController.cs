@@ -145,10 +145,12 @@ public class DroneLoadController: MonoBehaviour
 
     // Logging
     string filePath = Application.dataPath + "/../../SMARCUnityAssets/Logs/log.csv";
-    string filePath2 = Application.dataPath + "/../../SMARCUnityAssets/Logs/log_repeat.csv"; // for repeat training
-    string filePath3 = "/home/lifan/colcon_ws/src/smarc2/simulation/SMARCUnityAssets/Logs/repeat_simulation_ith.csv";
+    string filePath2 = Application.dataPath + "/../../SMARCUnityAssets/Logs/log_repeat.csv"; // for repeat training 3 variable 
+    string filePath3 = "/home/lifan/colcon_ws/src/smarc2/simulation/SMARCUnityAssets/Logs/repeat_simulation_ith.csv"; // just 1 variable
     TextWriter tw;
     TextWriter tw2;
+
+    TextWriter tw3;
 
 
 
@@ -244,17 +246,19 @@ public class DroneLoadController: MonoBehaviour
         tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3,insideCount");
         tw.Close();
 
-        tw2 = new StreamWriter(filePath2, false);
-        tw2.WriteLine("repeat_simulation_ith, dist_between_rope_and_UAV, wind_field");
-        tw2.Close();
-
-
-        RepeatTest = false; // start repeating   // default close
+        RepeatTest = true; // start repeating   // default close  // remeber to clean the count in the repeat_simulation_ith
 
         //filePath3
         Debug.Log($"{filePath3}");
         repeat_simulation_ith = ReadVariable(filePath3);
         Debug.Log($"repeat times: {repeat_simulation_ith}");
+
+        if (repeat_simulation_ith == 0){
+            tw2 = new StreamWriter(filePath2, false);
+            tw2.WriteLine("repeat_simulation_ith, dist_between_rope_and_UAV, wind_field");
+            tw2.Close();
+        }
+
 	}
 	
 	// Update is called once per frame
