@@ -253,6 +253,7 @@ public class DroneLoadController: MonoBehaviour
         repeat_simulation_ith = ReadVariable(filePath3);
         Debug.Log($"repeat times: {repeat_simulation_ith}");
 
+        // To avoid the reset scene to clear the data
         if (repeat_simulation_ith == 0){
             tw2 = new StreamWriter(filePath2, false);
             tw2.WriteLine("repeat_simulation_ith, dist_between_rope_and_UAV, wind_field");
