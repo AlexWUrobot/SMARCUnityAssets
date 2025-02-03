@@ -150,9 +150,6 @@ public class DroneLoadController: MonoBehaviour
     TextWriter tw;
     TextWriter tw2;
 
-    TextWriter tw3;
-
-
 
     private void Awake()
     {
@@ -440,13 +437,46 @@ public class DroneLoadController: MonoBehaviour
         Quaternion orientation = BaseLink.transform.rotation;
         Vector3 eulerENU = orientation.eulerAngles;
 
+        //Debug.Log($"Quaternion: {BaseLink.transform.rotation}");
+        //Debug.Log($"Local Quaternion: {BaseLink.transform.localRotation}");
+        //BaseLink.transform.parent.rotation = Quaternion.identity;
+        //Debug.Log($"Parent Rotation: {BaseLink.transform.parent.rotation.eulerAngles}");
+
+
         double roll = eulerENU.x;
         double pitch = eulerENU.y;
         double yaw = eulerENU.z;
 
-        double rollRad = roll;
-        double pitchRad = pitch;
-        double yawRad = yaw;
+        // double rollRad = roll;
+        // double pitchRad = pitch;
+        // double yawRad = yaw;
+
+        // Euler angle representation ambiguity and Gimbal lock when using Quaternion.eulerAngles. In Unity, transform.rotation.eulerAngles returns Tait-Bryan angles (XYZ, intrinsic rotation in degrees, in the Unity coordinate system, which is left-handed with Y-up).
+
+        // Convert quaternion to roll, pitch, yaw using Unity's coordinate system
+        
+        // method 1  (roll, yaw, pitch) = (0,0.79,0)
+        //float rollRad, pitchRad, yawRad;
+        //ToEulerAngles(orientation, out rollRad, out pitchRad, out yawRad);
+
+        // method 2  (0,0,0)  Not work all 0
+        // Vector3 eulerAngles = BaseLink.transform.parent.rotation.eulerAngles;
+        // rollRad = eulerAngles.x * Mathf.Deg2Rad;
+        // pitchRad = eulerAngles.y * Mathf.Deg2Rad;
+        // yawRad = eulerAngles.z * Mathf.Deg2Rad;
+
+        Quaternion parentRot = BaseLink.transform.parent.rotation;
+        BaseLink.transform.rotation = Quaternion.Inverse(parentRot) * BaseLink.transform.rotation;
+        eulerENU = BaseLink.transform.rotation.eulerAngles;
+        // float rollRad = eulerENU.x * Mathf.Deg2Rad;
+        // float pitchRad = eulerENU.y * Mathf.Deg2Rad;
+        // float yawRad = eulerENU.z * Mathf.Deg2Rad;
+
+        // Convert to radians and normalize to [-π, π]
+        float rollRad = Mathf.Deg2Rad * ((eulerENU.x > 180) ? eulerENU.x - 360 : eulerENU.x);
+        float pitchRad = Mathf.Deg2Rad * ((eulerENU.y > 180) ? eulerENU.y - 360 : eulerENU.y);
+        float yawRad = Mathf.Deg2Rad * ((eulerENU.z > 180) ? eulerENU.z - 360 : eulerENU.z);
+
 
         // Rad
         // double rollRad = Mathf.Deg2Rad * roll;
@@ -531,7 +561,7 @@ public class DroneLoadController: MonoBehaviour
 
                 //{1st waypoints, 2nd, 3rd, 4th}    
                 var positionsX = new List<double> { (float)x_s[0], (float)p_aim[0], (float)p_catch[0], (float)p_forward[0], (float)p_lift[0]};
-                var velocitiesX = new List<double> { 0, 0, 0, 0, 0 };
+                var velocitiesX = new List<double> { 0, 0, 1, 1, 0 };
                 var accelerationsX = new List<double> { 0, 0, 0, 0, 0 };
  
                 var positionsY = new List<double> { (float)x_s[1], (float)p_aim[1], (float)p_catch[1], (float)p_forward[1], (float)p_lift[1]};
@@ -1071,6 +1101,27 @@ public class DroneLoadController: MonoBehaviour
             propellers[i].SetRpm(propellers_rpms[i]);
         }
 	}
+
+    // Function to safely extract pitch (X-rotation in Unity)
+    void ToEulerAngles(Quaternion q, out float roll, out float pitch, out float yaw)
+    {
+        // Roll (X-axis)
+        float sinr_cosp = 2 * (q.w * q.x + q.y * q.z);
+        float cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y);
+        roll = Mathf.Atan2(sinr_cosp, cosr_cosp);
+
+        // Pitch (Y-axis)
+        float sinp = 2 * (q.w * q.y - q.z * q.x);
+        if (Mathf.Abs(sinp) >= 1)
+            pitch = Mathf.PI / 2 * Mathf.Sign(sinp); // Use 90° if out of range
+        else
+            pitch = Mathf.Asin(sinp);
+
+        // Yaw (Z-axis)
+        float siny_cosp = 2 * (q.w * q.z + q.x * q.y);
+        float cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+        yaw = Mathf.Atan2(siny_cosp, cosy_cosp);
+    }
 
     (Vector<double>, Vector<double>, Vector<double>) TrackingTargetTrajectory(Vector<double> x_TT, Vector<double> x_s, Vector<double> v_s) {
         Vector<double> x_s_d;
