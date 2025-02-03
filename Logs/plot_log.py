@@ -42,8 +42,8 @@ integral_end_time   = MST_time_stamp[1]
 
 plt.figure(1)
 plt.subplot(3, 1, 1)
-plt.plot(t, x_s1, label='x_s1')
-plt.plot(t, x_s_d1, label='x_s_d1')
+plt.plot(t, x_s1, label='x')
+plt.plot(t, x_s_d1, label='desired_x')
 plt.ylabel("x-axis meter")
 plt.legend()
 if vertical_dashline_turn_on == True:
@@ -53,17 +53,15 @@ if vertical_dashline_turn_on == True:
         plt.text(ts, max(x_s1) * 0.8, label, color='blue', rotation=90, 
                 verticalalignment='center', horizontalalignment='right')
 
-
-
 plt.subplot(3, 1, 2)
-plt.plot(t, x_s2, label='x_s2')
-plt.plot(t, x_s_d2, label='x_s_d2')
+plt.plot(t, x_s2, label='y')
+plt.plot(t, x_s_d2, label='desired_y')
 plt.ylabel("y-axis meter")
 plt.legend()
 
 plt.subplot(3, 1, 3)
-plt.plot(t, x_s3, label='x_s3')
-plt.plot(t, x_s_d3, label='x_s_d3')
+plt.plot(t, x_s3, label='z')
+plt.plot(t, x_s_d3, label='desired_z')
 plt.ylabel("z-axis meter")
 plt.xlabel("time (s)")
 plt.legend()
