@@ -243,7 +243,7 @@ public class DroneLoadController: MonoBehaviour
         tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3,insideCount");
         tw.Close();
 
-        RepeatTest = false; // start repeating   // default close  // remeber to clean the count in the repeat_simulation_ith
+        RepeatTest = true; // start repeating   // default close  // remeber to clean the count in the repeat_simulation_ith
 
         //filePath3
         Debug.Log($"{filePath3}");
@@ -556,12 +556,12 @@ public class DroneLoadController: MonoBehaviour
                 Vector3 p_aim = new Vector3(endPosENU.x-3, endPosENU.y, 3);  // 1st aiming
                 Vector3 p_catch = new Vector3(endPosENU.x - 0.05f, endPosENU.y, 0.05f);   // 2nd catch 
                 Vector3 p_forward = new Vector3(endPosENU.x + 1.0f, endPosENU.y, 0.05f); // 3rd move forward
-                Vector3 p_lift = new Vector3(endPosENU.x + 1.2f, endPosENU.y, 1.5f); // 4th lift
+                Vector3 p_lift = new Vector3(endPosENU.x + 1.2f, endPosENU.y, 1.0f); // 4th lift
 
 
                 //{1st waypoints, 2nd, 3rd, 4th}    
                 var positionsX = new List<double> { (float)x_s[0], (float)p_aim[0], (float)p_catch[0], (float)p_forward[0], (float)p_lift[0]};
-                var velocitiesX = new List<double> { 0, 0, 1, 1, 0 };
+                var velocitiesX = new List<double> { 0, 0, 3, 0.3, 0 };
                 var accelerationsX = new List<double> { 0, 0, 0, 0, 0 };
  
                 var positionsY = new List<double> { (float)x_s[1], (float)p_aim[1], (float)p_catch[1], (float)p_forward[1], (float)p_lift[1]};

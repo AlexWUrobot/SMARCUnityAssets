@@ -25,7 +25,7 @@ plt.tight_layout()
 
 plt.subplot(2, 1, 2)
 plt.plot(repeat_simulation_ith, wind_field, label='wind_field_effect_on_rope')
-plt.ylabel("number of segments")
+plt.ylabel("Integral between Stage Aim and Catch")
 plt.xlabel("i-th flight")
 plt.legend()
 plt.tight_layout()
