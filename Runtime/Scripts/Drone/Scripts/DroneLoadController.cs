@@ -14,10 +14,25 @@ using MathNet.Numerics.LinearAlgebra.Double;
 using Accord.Math.Optimization;
 using UnityEngine.SceneManagement;
 
+using MathNet.Numerics.Distributions; 
 using System.Linq;
 public class DroneLoadController: MonoBehaviour 
 {
     private static DroneLoadController instance;  // Singleton instance for persistence
+    private static int isPersistent = 5;
+    private static List<double> X_sample = new List<double>(); // Sampled vx values
+    private static List<double> Y_sample = new List<double>(); // Corresponding cost values
+    //private static int maxIterations = 15;
+
+    // Search space for vx
+    public double vxMin = 0.4, vxMax = 2.5;
+    private System.Random rand = new System.Random();   // Random generator
+
+    // Initialize with 3 random samples
+    // private static i_Initialize = 0;
+    public double vx_rand = 1;
+
+
 
     [Header("Basics")]
     [Tooltip("Baselink of the drone")]
@@ -53,8 +68,7 @@ public class DroneLoadController: MonoBehaviour
     public bool LogTrajectory = false;
     public bool Helix = false;
     public bool RepeatTest = false;   // start repeat test for 20 times, why true cannot work?
-    
-
+    public bool BayesianOptimization = true;
     
     private double TrajectoryStartTime = 0;
     private double CatchStartTime = 0; // for CatchStartTime start time
@@ -243,17 +257,32 @@ public class DroneLoadController: MonoBehaviour
         tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3,insideCount");
         tw.Close();
 
-        RepeatTest = false; // start repeating   // default close  // remeber to clean the count in the repeat_simulation_ith
+        RepeatTest = true; // start repeating   // default close  // remeber to clean the count in the repeat_simulation_ith
+
 
         //filePath3
         Debug.Log($"{filePath3}");
         repeat_simulation_ith = ReadVariable(filePath3);
         Debug.Log($"repeat times: {repeat_simulation_ith}");
 
+
+        if (BayesianOptimization == true && repeat_simulation_ith < 3 && repeat_simulation_ith < 20){
+            // Initialize with 3 random samples
+            vx_rand = rand.NextDouble() * (vxMax - vxMin) + vxMin;
+            // vx_rand = 0.4;
+            Debug.Log($"Initialize Bayesian--------------------repeat times: {repeat_simulation_ith}, vx_rand:{vx_rand}");
+        }else if (BayesianOptimization == true && repeat_simulation_ith >= 3 && repeat_simulation_ith < 20){
+            vx_rand = ProposeNextVx();
+            Debug.Log($"Train Bayesian--------------------repeat times: {repeat_simulation_ith}, vx_rand:{vx_rand}");
+        }
+
+        //isPersistent = isPersistent +1;
+        //Debug.Log($"isPersistent: {isPersistent}");
+
         // To avoid the reset scene to clear the data
         if (repeat_simulation_ith == 0){
             tw2 = new StreamWriter(filePath2, false);
-            tw2.WriteLine("repeat_simulation_ith,dist_between_rope_and_UAV,wind_field");
+            tw2.WriteLine("repeat_simulation_ith,dist_between_rope_and_UAV,wind_field,vx_rand,cost");
             tw2.Close();
         }
 
@@ -561,7 +590,10 @@ public class DroneLoadController: MonoBehaviour
 
                 //{1st waypoints, 2nd, 3rd, 4th}    
                 var positionsX = new List<double> { (float)x_s[0], (float)p_aim[0], (float)p_catch[0], (float)p_forward[0], (float)p_lift[0]};
-                var velocitiesX = new List<double> { 0, 0, 2.5, 0.3, 0 };
+                var velocitiesX = new List<double> { 0, 0, 1.0, 0.3, 0 };
+                if (BayesianOptimization == true){
+                    velocitiesX = new List<double> { 0, 0, vx_rand, 0.3, 0 };
+                }
                 var accelerationsX = new List<double> { 0, 0, 0, 0, 0 };
  
                 var positionsY = new List<double> { (float)x_s[1], (float)p_aim[1], (float)p_catch[1], (float)p_forward[1], (float)p_lift[1]};
@@ -624,7 +656,7 @@ public class DroneLoadController: MonoBehaviour
                     Debug.Log($"UAV complete catching, stay in the last point {Tp} / {total_MST_time}");
                     LogTrajectory = false;
 
-                    if(RepeatTest == true && Tp > total_MST_time + 5)   
+                    if(RepeatTest == true && Tp > total_MST_time + 2)   
                     {   // end mission and record and reset the scene
                         ContinueTrajectory = false;
                         
@@ -634,9 +666,35 @@ public class DroneLoadController: MonoBehaviour
                         timeList.Clear();
                         countList.Clear();
                         
-                        tw2 = new StreamWriter(filePath2, true);
-                        tw2.WriteLine($"{repeat_simulation_ith},{dist_between_rope_and_UAV},{resultIntegral}");
-                        tw2.Close();
+
+                        if (BayesianOptimization == true)
+                        {// Complete flights and evaluate the cost (success, penalty, and velocity)
+
+                            // Cost function: Minimize disturbance + velocity penalty, with huge failure penalty
+                            double penalty = Math.Sqrt(vx_rand * vx_rand);
+                            double airflowDisturbance = resultIntegral;
+                            double cost = airflowDisturbance + 10*penalty;
+                            // fail catching
+                            if(dist_between_rope_and_UAV > 1){
+                                cost += 10; // Large penalty for failure
+                            }    
+
+                            foreach (double value in X_sample){
+                                Debug.Log($"Does X_sample saving????????????-------------> X_sample: {value}");
+                            }
+                            
+
+                            X_sample.Add(vx_rand);  // velocity, need to decrease to 0.5 to save energy 
+                            Y_sample.Add(cost);     // airflow effect, need to decrease to 0 
+
+                            tw2 = new StreamWriter(filePath2, true);
+                            tw2.WriteLine($"{repeat_simulation_ith},{dist_between_rope_and_UAV},{resultIntegral},{vx_rand},{cost}");
+                            tw2.Close();
+                        }else{
+                            tw2 = new StreamWriter(filePath2, true);
+                            tw2.WriteLine($"{repeat_simulation_ith},{dist_between_rope_and_UAV},{resultIntegral}");
+                            tw2.Close();
+                        }
 
                         Debug.Log($"Reset the scene");
                         ResetScene();
@@ -1487,6 +1545,103 @@ public class DroneLoadController: MonoBehaviour
 
         return 0; // Default value in case of error
     }
+
+
+    // Propose the next vx using Bayesian Optimization
+    private double ProposeNextVx()
+    {
+        int numCandidates = 100;
+        double bestVx = vxMin;
+        double bestEI = double.MinValue;
+
+        // Generate candidate vx values
+        for (int i = 0; i < numCandidates; i++)
+        {
+            double candidateVx = UnityEngine.Random.Range((float)vxMin, (float)vxMax);
+
+            // Compute Expected Improvement (EI)
+            double ei = ExpectedImprovement(candidateVx);
+
+            // Select the candidate with highest EI
+            if (ei > bestEI)
+            {
+                bestEI = ei;
+                bestVx = candidateVx;
+            }
+        }
+        return bestVx;
+    }
+
+
+    // Expected Improvement (EI) acquisition function
+    private double ExpectedImprovement(double vx)
+    {
+        if (X_sample.Count == 0) return 1.0; // Exploration in the beginning
+
+        // Fit Gaussian Process model
+        (Vector<double> mu, Vector<double> sigma) = GaussianProcessPredict(vx);
+
+        // Best observed cost
+        // double minY = Math.Min(Y_sample.ToArray());
+        double minY = Y_sample.Min(); 
+
+        // Compute EI
+        double xi = 0.01; // Small exploration-exploitation balance factor
+        double imp = minY - mu[0] - xi;
+        double Z = imp / sigma[0];
+        double ei = imp * Normal.CDF(0, 1, Z) + sigma[0] * Normal.PDF(0, 1, Z);
+        
+        return ei;
+    }
+
+    // Gaussian Process Regression (GPR) prediction
+    private (Vector<double> mu, Vector<double> sigma) GaussianProcessPredict(double vx)
+    {
+        int n = X_sample.Count;
+        if (n == 0) return (Vector<double>.Build.DenseOfArray(new double[] { 0.5 }), 
+                            Vector<double>.Build.DenseOfArray(new double[] { 0.1 }));
+
+        // Convert data to matrices
+        var X = Matrix<double>.Build.Dense(n, 1, (i, j) => X_sample[i]);
+        var Y = Vector<double>.Build.DenseOfArray(Y_sample.ToArray());
+        var Xtest = Vector<double>.Build.DenseOfArray(new double[] { vx });
+
+        // Define RBF Kernel
+        double lengthScale = 1.0;
+        Matrix<double> K = KernelRBF(X, X, lengthScale);
+        Matrix<double> K_s = KernelRBF(X, Xtest.ToColumnMatrix(), lengthScale);
+        Matrix<double> K_ss = KernelRBF(Xtest.ToColumnMatrix(), Xtest.ToColumnMatrix(), lengthScale);
+
+        // Add small noise to diagonal for numerical stability
+        double noise = 1e-4;
+        K = K + Matrix<double>.Build.DenseIdentity(n) * noise;
+
+        // Compute GP mean and variance
+        Matrix<double> K_inv = K.Inverse();
+        Vector<double> mu = K_s.TransposeThisAndMultiply(K_inv * Y);
+        Matrix<double> sigma = K_ss - K_s.TransposeThisAndMultiply(K_inv * K_s);
+
+        return (mu, sigma.Diagonal());
+    }
+
+    // RBF Kernel function for Gaussian Process
+    private Matrix<double> KernelRBF(Matrix<double> X1, Matrix<double> X2, double lengthScale)
+    {
+        int n1 = X1.RowCount;
+        int n2 = X2.RowCount;
+        Matrix<double> K = Matrix<double>.Build.Dense(n1, n2);
+
+        for (int i = 0; i < n1; i++)
+        {
+            for (int j = 0; j < n2; j++)
+            {
+                double dist = Math.Pow(X1[i, 0] - X2[j, 0], 2);
+                K[i, j] = Math.Exp(-dist / (2 * lengthScale * lengthScale));
+            }
+        }
+        return K;
+    }
+
 }
 
 
