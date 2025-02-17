@@ -19,7 +19,7 @@ using System.Linq;
 public class DroneLoadController: MonoBehaviour 
 {
     private static DroneLoadController instance;  // Singleton instance for persistence
-    private static int isPersistent = 5;
+    //private static int isPersistent = 5;
     private static List<double> X_sample = new List<double>(); // Sampled vx values
     private static List<double> Y_sample = new List<double>(); // Corresponding cost values
     //private static int maxIterations = 15;
@@ -671,16 +671,17 @@ public class DroneLoadController: MonoBehaviour
                         {// Complete flights and evaluate the cost (success, penalty, and velocity)
 
                             // Cost function: Minimize disturbance + velocity penalty, with huge failure penalty
-                            double penalty = Math.Sqrt(vx_rand * vx_rand);
+                            double penalty = Math.Abs(vx_rand);
                             double airflowDisturbance = resultIntegral;
-                            double cost = airflowDisturbance + 10*penalty;
+                            // double cost = airflowDisturbance + 10*penalty;
+                            double cost = penalty + airflowDisturbance;
                             // fail catching
-                            if(dist_between_rope_and_UAV > 1){
-                                cost += 10; // Large penalty for failure
-                            }    
+                            // if(dist_between_rope_and_UAV > 1){
+                            //     cost += 10; // Large penalty for failure
+                            // }    
 
-                            foreach (double value in X_sample){
-                                Debug.Log($"Does X_sample saving????????????-------------> X_sample: {value}");
+                            foreach (double value in Y_sample){
+                                Debug.Log($"Does Y_sample saving????????????-------------> Y_sample: {value}");
                             }
                             
 
@@ -1550,9 +1551,10 @@ public class DroneLoadController: MonoBehaviour
     // Propose the next vx using Bayesian Optimization
     private double ProposeNextVx()
     {
-        int numCandidates = 100;
+        int numCandidates = 2000;
         double bestVx = vxMin;
         double bestEI = double.MinValue;
+        double bestUCB = double.MinValue;
 
         // Generate candidate vx values
         for (int i = 0; i < numCandidates; i++)
@@ -1560,36 +1562,62 @@ public class DroneLoadController: MonoBehaviour
             double candidateVx = UnityEngine.Random.Range((float)vxMin, (float)vxMax);
 
             // Compute Expected Improvement (EI)
-            double ei = ExpectedImprovement(candidateVx);
+            // double ei = ExpectedImprovement(candidateVx);
 
-            // Select the candidate with highest EI
-            if (ei > bestEI)
+            // // Select the candidate with highest EI
+            // if (ei > bestEI)
+            // {
+            //     bestEI = ei;
+            //     bestVx = candidateVx;
+            // }
+
+            // Compute UCB instead of EI
+            double ucb = UpperConfidenceBound(candidateVx);
+
+            // Select the candidate with highest UCB
+            if (ucb > bestUCB)
             {
-                bestEI = ei;
+                bestUCB = ucb;
                 bestVx = candidateVx;
             }
+
         }
         return bestVx;
     }
 
+    private double UpperConfidenceBound(double vx)
+    {
+        if (X_sample.Count == 0) return UnityEngine.Random.Range((float)vxMin, (float)vxMax);
+
+        // Fit Gaussian Process model
+        (Vector<double> mu, Vector<double> sigma) = GaussianProcessPredict(vx);
+
+        // UCB Acquisition Function
+        double beta = 2.0;  // Controls exploration-exploitation tradeoff (Increase for more exploration)
+        double ucb = mu[0] + beta * sigma[0];
+
+        return ucb;
+    }
 
     // Expected Improvement (EI) acquisition function
     private double ExpectedImprovement(double vx)
     {
-        if (X_sample.Count == 0) return 1.0; // Exploration in the beginning
+        //if (X_sample.Count == 0) return 1.0; // Exploration in the beginning
+        if (X_sample.Count == 0) return UnityEngine.Random.Range((float)vxMin, (float)vxMax);
 
         // Fit Gaussian Process model
         (Vector<double> mu, Vector<double> sigma) = GaussianProcessPredict(vx);
 
         // Best observed cost
-        // double minY = Math.Min(Y_sample.ToArray());
         double minY = Y_sample.Min(); 
 
         // Compute EI
-        double xi = 0.01; // Small exploration-exploitation balance factor
+        double xi = 0.05; // Small exploration-exploitation balance factor
         double imp = minY - mu[0] - xi;
-        double Z = imp / sigma[0];
-        double ei = imp * Normal.CDF(0, 1, Z) + sigma[0] * Normal.PDF(0, 1, Z);
+        //double safeSigma = Math.Max(sigma[0], 1e-3); // Prevents instability due to near-zero variance  // Change
+        double safeSigma = Math.Sqrt(sigma[0] * sigma[0] + 1e-6);
+        double Z = imp / safeSigma;
+        double ei = imp * Normal.CDF(0, 1, Z) + safeSigma * Normal.PDF(0, 1, Z);
         
         return ei;
     }
@@ -1607,18 +1635,20 @@ public class DroneLoadController: MonoBehaviour
         var Xtest = Vector<double>.Build.DenseOfArray(new double[] { vx });
 
         // Define RBF Kernel
-        double lengthScale = 1.0;
+        double lengthScale = 0.1;  // 1.0 to 0.5 to 1
         Matrix<double> K = KernelRBF(X, X, lengthScale);
         Matrix<double> K_s = KernelRBF(X, Xtest.ToColumnMatrix(), lengthScale);
         Matrix<double> K_ss = KernelRBF(Xtest.ToColumnMatrix(), Xtest.ToColumnMatrix(), lengthScale);
 
         // Add small noise to diagonal for numerical stability
-        double noise = 1e-4;
+        double noise = 1e-3;
         K = K + Matrix<double>.Build.DenseIdentity(n) * noise;
 
         // Compute GP mean and variance
         Matrix<double> K_inv = K.Inverse();
-        Vector<double> mu = K_s.TransposeThisAndMultiply(K_inv * Y);
+        // Vector<double> mu = K_s.TransposeThisAndMultiply(K_inv * Y);
+        double meanY = Y.Average();  // Change
+        Vector<double> mu = K_s.TransposeThisAndMultiply(K_inv * (Y - meanY)) + meanY; // Change
         Matrix<double> sigma = K_ss - K_s.TransposeThisAndMultiply(K_inv * K_s);
 
         return (mu, sigma.Diagonal());
