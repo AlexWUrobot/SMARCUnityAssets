@@ -25,7 +25,7 @@ public class DroneLoadController: MonoBehaviour
     //private static int maxIterations = 15;
 
     // Search space for vx
-    public double vxMin = 0.4, vxMax = 2.5;
+    public double vxMin = 0.5, vxMax = 2.5;
     private System.Random rand = new System.Random();   // Random generator
 
     // Initialize with 3 random samples
@@ -656,7 +656,7 @@ public class DroneLoadController: MonoBehaviour
                     Debug.Log($"UAV complete catching, stay in the last point {Tp} / {total_MST_time}");
                     LogTrajectory = false;
 
-                    if(RepeatTest == true && Tp > total_MST_time + 2)   
+                    if(RepeatTest == true && Tp > total_MST_time + 0.5)   //
                     {   // end mission and record and reset the scene
                         ContinueTrajectory = false;
                         
@@ -1554,50 +1554,27 @@ public class DroneLoadController: MonoBehaviour
         int numCandidates = 2000;
         double bestVx = vxMin;
         double bestEI = double.MinValue;
-        double bestUCB = double.MinValue;
 
         // Generate candidate vx values
         for (int i = 0; i < numCandidates; i++)
         {
-            double candidateVx = UnityEngine.Random.Range((float)vxMin, (float)vxMax);
+            double stepSize = 0.05 * (vxMax - vxMin);
+            double candidateVx = bestVx + UnityEngine.Random.Range(-(float)stepSize, (float)stepSize);
+            //double candidateVx = UnityEngine.Random.Range((float)vxMin, (float)vxMax);
 
             // Compute Expected Improvement (EI)
-            // double ei = ExpectedImprovement(candidateVx);
+            double ei = ExpectedImprovement(candidateVx);
 
-            // // Select the candidate with highest EI
-            // if (ei > bestEI)
-            // {
-            //     bestEI = ei;
-            //     bestVx = candidateVx;
-            // }
-
-            // Compute UCB instead of EI
-            double ucb = UpperConfidenceBound(candidateVx);
-
-            // Select the candidate with highest UCB
-            if (ucb > bestUCB)
+            // Select the candidate with highest EI
+            if (ei > bestEI)
             {
-                bestUCB = ucb;
+                bestEI = ei;
                 bestVx = candidateVx;
             }
-
         }
         return bestVx;
     }
 
-    private double UpperConfidenceBound(double vx)
-    {
-        if (X_sample.Count == 0) return UnityEngine.Random.Range((float)vxMin, (float)vxMax);
-
-        // Fit Gaussian Process model
-        (Vector<double> mu, Vector<double> sigma) = GaussianProcessPredict(vx);
-
-        // UCB Acquisition Function
-        double beta = 2.0;  // Controls exploration-exploitation tradeoff (Increase for more exploration)
-        double ucb = mu[0] + beta * sigma[0];
-
-        return ucb;
-    }
 
     // Expected Improvement (EI) acquisition function
     private double ExpectedImprovement(double vx)
