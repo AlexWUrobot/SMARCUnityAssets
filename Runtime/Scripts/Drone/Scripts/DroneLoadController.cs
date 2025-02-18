@@ -1400,8 +1400,8 @@ public class DroneLoadController: MonoBehaviour
 
     int PointsInsideTrapezoid(Vector3[] points, Vector3 directionScaled, Vector3 center)
     {
-        float smallRadius = 0.3f;
-        float largeRadius = 1.0f;
+        float smallRadius = 0.6f;//0.3f;
+        float largeRadius = 1.5f;//1.0f;
         float height = 2.5f;
         
         Vector3 v = directionScaled.normalized;
