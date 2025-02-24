@@ -656,7 +656,7 @@ public class DroneLoadController: MonoBehaviour
                     Debug.Log($"UAV complete catching, stay in the last point {Tp} / {total_MST_time}");
                     LogTrajectory = false;
 
-                    if(RepeatTest == true && Tp > total_MST_time + 0.5)   //
+                    if(RepeatTest == true && Tp > total_MST_time + 1.0)   //  + 0.5
                     {   // end mission and record and reset the scene
                         ContinueTrajectory = false;
                         

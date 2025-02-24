@@ -7,7 +7,8 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # read log.csv in the same folder
 
-df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat.csv'))
+# df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_v2.csv'))
+df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_20250224.csv'))
 
 repeat_simulation_ith = df['repeat_simulation_ith']
 dist_between_rope_and_UAV = df['dist_between_rope_and_UAV']
@@ -15,9 +16,14 @@ wind_field = df['wind_field']
 vx_rand = df['vx_rand']
 cost = df['cost']
 
+highlight_fight = 6
+
 plt.figure()
 plt.subplot(4, 1, 1)
-plt.plot(repeat_simulation_ith, dist_between_rope_and_UAV, label='distance_between_rope_and_UAV')
+plt.plot(repeat_simulation_ith, dist_between_rope_and_UAV, label='distance between rope and UAV')
+plt.axhline(y=1, color='r', linestyle='--')  # Add horizontal line
+plt.text(repeat_simulation_ith.iloc[-1], 1, 'success baseline', color='r', verticalalignment='bottom', horizontalalignment='right')  # Add text annotation
+plt.axvline(x=highlight_fight, color='r', linestyle='--', linewidth=1)
 plt.ylabel("meter")
 # plt.xlabel("i-th flight")
 plt.legend()
@@ -25,10 +31,11 @@ plt.tight_layout()
 
 
 plt.subplot(4, 1, 2)
-plt.plot(repeat_simulation_ith, wind_field, label='Integral between Stage Aim and Catch')
+plt.plot(repeat_simulation_ith, wind_field, label='integral between Stage Aim and Catch')
 plt.ylabel("airflow")
 #plt.xlabel("i-th flight")
 plt.legend()
+plt.axvline(x=highlight_fight, color='r', linestyle='--', linewidth=1)
 plt.tight_layout()
 
 
@@ -37,6 +44,7 @@ plt.plot(repeat_simulation_ith, vx_rand, label='vx in Stage Catch')
 plt.ylabel("meter/s")
 #plt.xlabel("i-th flight")
 plt.legend()
+plt.axvline(x=highlight_fight, color='r', linestyle='--', linewidth=1)
 plt.tight_layout()
 
 
@@ -45,6 +53,7 @@ plt.plot(repeat_simulation_ith, cost, label='cost')
 plt.ylabel("cost")
 plt.xlabel("i-th flight")
 plt.legend()
+plt.axvline(x=highlight_fight, color='r', linestyle='--', linewidth=1)
 plt.tight_layout()
 
 plt.show()
