@@ -68,7 +68,7 @@ public class DroneLoadController: MonoBehaviour
     public bool LogTrajectory = false;
     public bool Helix = false;
     public bool RepeatTest = false;   // start repeat test for 20 times, why true cannot work?
-    public bool BayesianOptimization = true;
+    public bool BayesianOptimization = false;
     
     private double TrajectoryStartTime = 0;
     private double CatchStartTime = 0; // for CatchStartTime start time
@@ -257,7 +257,7 @@ public class DroneLoadController: MonoBehaviour
         tw.WriteLine("t,x_s1,x_s2,x_s3,x_s_d1,x_s_d2,x_s_d3,propellers_rpms1,propellers_rpms2,propellers_rpms3,propellers_rpms4,rollRad,pitchRad,yawRad,v_s1,v_s2,v_s3,v_s_d1,v_s_d2,v_s_d3,insideCount");
         tw.Close();
 
-        RepeatTest = true; // start repeating   // default close  // remeber to clean the count in the repeat_simulation_ith
+        RepeatTest = false; // start repeating   // default close  // remeber to clean the count in the repeat_simulation_ith
 
 
         //filePath3
@@ -590,7 +590,7 @@ public class DroneLoadController: MonoBehaviour
 
                 //{1st waypoints, 2nd, 3rd, 4th}    
                 var positionsX = new List<double> { (float)x_s[0], (float)p_aim[0], (float)p_catch[0], (float)p_forward[0], (float)p_lift[0]};
-                var velocitiesX = new List<double> { 0, 0, 1.0, 0.3, 0 };
+                var velocitiesX = new List<double> { 0, 0, 1.1, 0.8, 0 };
                 if (BayesianOptimization == true){
                     velocitiesX = new List<double> { 0, 0, vx_rand, 0.3, 0 };
                 }

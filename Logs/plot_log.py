@@ -6,7 +6,7 @@ import os
 from mpl_toolkits.mplot3d import Axes3D
 
 # read log.csv in the same folder
-df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log0.csv'))
+df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log.csv'))
 t = df['t']
 x_s1 = df['x_s1']
 x_s2 = df['x_s2']
