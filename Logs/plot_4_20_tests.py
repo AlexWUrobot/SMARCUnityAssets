@@ -7,50 +7,67 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # read log.csv in the same folder
 
-df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_v2.csv'))  # velocity 0.5 
+#df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_v2.csv'))  # velocity 0.5 
+df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_2025_02_26_velocity_0_point_2.csv'))  # velocity 0.2 m/s  
 
 repeat_simulation_ith = df['repeat_simulation_ith']
 dist_between_rope_and_UAV = df['dist_between_rope_and_UAV']
 wind_field = df['wind_field']
 
 
-df2 = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_v3.csv'))  # velocity 1.0
+#df2 = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_v3.csv'))  # velocity 1.0
+df2 = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_2025_02_26_velocity_0_point_35.csv'))  # velocity 0.35 m/s  
 repeat_simulation_ith_2 = df2['repeat_simulation_ith']
 dist_between_rope_and_UAV_2 = df2['dist_between_rope_and_UAV']
 wind_field_2 = df2['wind_field']
 
 
-df4 = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_v4.csv'))  # velocity 1.5 m/s
+#df4 = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_v4.csv'))  # velocity 1.5 m/s
+df4 = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_2025_02_26_velocity_0_point_5.csv'))  # velocity 0.5 
 repeat_simulation_ith_4 = df4['repeat_simulation_ith']
 dist_between_rope_and_UAV_4 = df4['dist_between_rope_and_UAV']
 wind_field_4 = df4['wind_field']
 
 
-df5 = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_v5.csv'))  # velocity 2.0 m/s
+#df5 = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_v5.csv'))  # velocity 2.0 m/s
+df5 = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_2025_02_26_velocity_1_point_1.csv'))  # velocity 1.1 m/s
 repeat_simulation_ith_5 = df5['repeat_simulation_ith']
 dist_between_rope_and_UAV_5 = df5['dist_between_rope_and_UAV']
 wind_field_5 = df5['wind_field']
 
 
+#df6 = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_2025_02_26_velocity_2_point_0.csv'))  # velocity 2.0 m/s
+df6 = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_2025_02_26_velocity_2_point_2.csv'))  # velocity 2.2 m/s
+
+repeat_simulation_ith_6 = df6['repeat_simulation_ith']
+dist_between_rope_and_UAV_6 = df6['dist_between_rope_and_UAV']
+wind_field_6 = df6['wind_field']
+
+
+
 plt.figure()
 plt.subplot(2, 1, 1)
-plt.plot(repeat_simulation_ith, dist_between_rope_and_UAV, label='UAV velocity 0.5 m/s')
-plt.plot(repeat_simulation_ith_2, dist_between_rope_and_UAV_2, label=' 1 m/s')
-plt.plot(repeat_simulation_ith_4, dist_between_rope_and_UAV_4, label=' 1.5 m/s')
-plt.plot(repeat_simulation_ith_5, dist_between_rope_and_UAV_5, label=' 2 m/s')
+plt.plot(repeat_simulation_ith[1:], dist_between_rope_and_UAV[1:], label=' 0.2 m/s')
+plt.plot(repeat_simulation_ith_2[1:], dist_between_rope_and_UAV_2[1:], label=' 0.35 m/s')
+plt.plot(repeat_simulation_ith_4[1:], dist_between_rope_and_UAV_4[1:], '--',label=' 0.5 m/s')
+plt.plot(repeat_simulation_ith_5[1:], dist_between_rope_and_UAV_5[1:], '.', label=' 1.1 m/s')
+#plt.plot(repeat_simulation_ith_6[1:], dist_between_rope_and_UAV_6[1:], label=' 2.0 m/s')
+
 plt.title("Distance between rope and UAV")
 
 plt.ylabel("distance (meter)")
 #plt.xlabel("i-th flight")
-plt.legend()
+#plt.legend()
 plt.tight_layout()
 
 
 plt.subplot(2, 1, 2)
-plt.plot(repeat_simulation_ith, wind_field, label='0.5 m/s')
-plt.plot(repeat_simulation_ith_2, wind_field_2, label=' 1 m/s')
-plt.plot(repeat_simulation_ith_4, wind_field_4, label=' 1.5 m/s')
-plt.plot(repeat_simulation_ith_5, wind_field_5, label=' 2 m/s')
+plt.plot(repeat_simulation_ith[1:], wind_field[1:], label=' 0.2 m/s')
+plt.plot(repeat_simulation_ith_2[1:], wind_field_2[1:], label=' 0.35 m/s')
+plt.plot(repeat_simulation_ith_4[1:], wind_field_4[1:], '--', label=' 0.5 m/s')
+plt.plot(repeat_simulation_ith_5[1:], wind_field_5[1:], '.', label=' 1.1 m/s')
+#plt.plot(repeat_simulation_ith_6[1:], wind_field_6[1:], label=' 2.0 m/s')
+
 plt.title("Integral airflow effect on the rope")
 
 
