@@ -8,7 +8,11 @@ from mpl_toolkits.mplot3d import Axes3D
 # read log.csv in the same folder
 
 # df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_v2.csv'))
-df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_20250224.csv'))
+#df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_20250224.csv')) # 0.3 m/s at Stage forward
+#df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_20250226.csv')) # 0.8 m/s at Stage forward  1.5 sec interval between repeat
+#df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_20250226_v2.csv')) # 0.8 m/s at Stage forward  1.0 sec interval between repeat
+#df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat_20250226_v3.csv')) # 0.8 m/s at Stage forward  1.0 sec interval between repeat
+df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'log_repeat.csv'))
 
 repeat_simulation_ith = df['repeat_simulation_ith']
 dist_between_rope_and_UAV = df['dist_between_rope_and_UAV']

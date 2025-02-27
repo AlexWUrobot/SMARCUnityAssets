@@ -8,6 +8,7 @@ run python3 plot_BayesianOptimization
 
 In DroneLoadController.cs
 Line 71  BayesianOptimization = true;  // run 20 times
+In GUI clikc V in  Bayesian Optimization 
 Line 260 RepeatTest = true;
 
 repeat_simulation_ith.csv ,  change 20 to 0
@@ -17,8 +18,8 @@ Save log_repeat.csv
 python3 plot_BayesianOptimization
 
 --------------------------------------------------------------
-Fig. 6 (a) (b) (c)
-Fig. 7 (a) (b)
+Fig. 6 (a) (b) (c) (updated)
+Fig. 7 (a) (b) (updated)
 
 
 In DroneLoadController.cs
@@ -31,10 +32,8 @@ Python3 plot_log.csv
 
 
 
-
-
-
 --------------------------------------------------------------
+Fig. 8  (updated)
 
 In DroneLoadController.cs
 
