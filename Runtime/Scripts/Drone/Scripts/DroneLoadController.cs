@@ -593,7 +593,7 @@ public class DroneLoadController: MonoBehaviour
 
                 //{1st waypoints, 2nd, 3rd, 4th}    
                 var positionsX = new List<double> { (float)x_s[0], (float)p_aim[0], (float)p_catch[0], (float)p_forward[0], (float)p_lift[0]};
-                var velocitiesX = new List<double> { 0, 0, 0.5, 0.8, 0 };
+                var velocitiesX = new List<double> { 0, 0, 1.1, 0.8, 0 };
                 if (BayesianOptimization == true){
                     //velocitiesX = new List<double> { 0, 0, vx_rand, 0.3, 0 };
                     velocitiesX = new List<double> { 0, 0, vx_rand, 0.8, 0 };
