@@ -46,7 +46,7 @@ wind_field_6 = df6['wind_field']
 
 
 plt.figure()
-plt.subplot(2, 1, 1)
+plt.subplot(2, 1, 2)
 plt.plot(repeat_simulation_ith[1:], dist_between_rope_and_UAV[1:], label=' 0.2 m/s')
 plt.plot(repeat_simulation_ith_2[1:], dist_between_rope_and_UAV_2[1:], label=' 0.35 m/s')
 plt.plot(repeat_simulation_ith_4[1:], dist_between_rope_and_UAV_4[1:], '--',label=' 0.5 m/s')
@@ -61,7 +61,7 @@ plt.ylabel("distance (meter)")
 plt.tight_layout()
 
 
-plt.subplot(2, 1, 2)
+plt.subplot(2, 1, 1)
 plt.plot(repeat_simulation_ith[1:], wind_field[1:], label=' 0.2 m/s')
 plt.plot(repeat_simulation_ith_2[1:], wind_field_2[1:], label=' 0.35 m/s')
 plt.plot(repeat_simulation_ith_4[1:], wind_field_4[1:], '--', label=' 0.5 m/s')
@@ -70,8 +70,8 @@ plt.plot(repeat_simulation_ith_5[1:], wind_field_5[1:], '.', label=' 1.1 m/s')
 
 plt.title("Integral airflow effect on the rope")
 
-
-plt.ylabel("Integral between Stage Aim and Catch")
+plt.ylabel("Integral\nbetween Stage Aim and Catch")
+#plt.ylabel("Integral between Stage Aim and Catch")
 plt.xlabel("i-th flight")
 plt.legend()
 plt.tight_layout()
