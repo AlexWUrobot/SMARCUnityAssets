@@ -47,9 +47,9 @@ wind_field_6 = df6['wind_field']
 
 plt.figure()
 plt.subplot(2, 1, 2)
-plt.plot(repeat_simulation_ith[1:], dist_between_rope_and_UAV[1:], label=' 0.2 m/s')
-plt.plot(repeat_simulation_ith_2[1:], dist_between_rope_and_UAV_2[1:], label=' 0.35 m/s')
-plt.plot(repeat_simulation_ith_4[1:], dist_between_rope_and_UAV_4[1:], '--',label=' 0.5 m/s')
+plt.plot(repeat_simulation_ith[1:], dist_between_rope_and_UAV[1:], '*', label=' 0.2 m/s')
+plt.plot(repeat_simulation_ith_2[1:], dist_between_rope_and_UAV_2[1:], '^', label=' 0.35 m/s')
+plt.plot(repeat_simulation_ith_4[1:], dist_between_rope_and_UAV_4[1:], 'x',label=' 0.5 m/s')
 plt.plot(repeat_simulation_ith_5[1:], dist_between_rope_and_UAV_5[1:], '.', label=' 1.1 m/s')
 #plt.plot(repeat_simulation_ith_6[1:], dist_between_rope_and_UAV_6[1:], label=' 2.0 m/s')
 
@@ -62,9 +62,9 @@ plt.tight_layout()
 
 
 plt.subplot(2, 1, 1)
-plt.plot(repeat_simulation_ith[1:], wind_field[1:], label=' 0.2 m/s')
-plt.plot(repeat_simulation_ith_2[1:], wind_field_2[1:], label=' 0.35 m/s')
-plt.plot(repeat_simulation_ith_4[1:], wind_field_4[1:], '--', label=' 0.5 m/s')
+plt.plot(repeat_simulation_ith[1:], wind_field[1:], '*', label=' 0.2 m/s')
+plt.plot(repeat_simulation_ith_2[1:], wind_field_2[1:], '^', label=' 0.35 m/s')
+plt.plot(repeat_simulation_ith_4[1:], wind_field_4[1:], 'x', label=' 0.5 m/s')
 plt.plot(repeat_simulation_ith_5[1:], wind_field_5[1:], '.', label=' 1.1 m/s')
 #plt.plot(repeat_simulation_ith_6[1:], wind_field_6[1:], label=' 2.0 m/s')
 
@@ -73,7 +73,7 @@ plt.title("Integral airflow effect on the rope")
 plt.ylabel("Integral\nbetween Stage Aim and Catch")
 #plt.ylabel("Integral between Stage Aim and Catch")
 plt.xlabel("i-th flight")
-plt.legend()
+plt.legend(loc="upper left", bbox_to_anchor=(0.75, 0.9))
 plt.tight_layout()
 plt.show()
 
@@ -165,7 +165,7 @@ plt.show()
 # plt.tight_layout()
 # ########################################## Velocity
 
-# plt.figure(3)
+# plt.figure(3)--
 # plt.subplot(3, 1, 1)
 # plt.plot(t, v_s1, label='v_x')
 # plt.plot(t, v_s_d1, label='desired_v_x')
