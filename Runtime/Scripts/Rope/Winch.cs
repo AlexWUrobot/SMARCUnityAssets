@@ -2,6 +2,13 @@ using UnityEngine;
 
 using Force;
 
+
+using Unity.Robotics.ROSTCPConnector;
+using StdMessages = RosMessageTypes.Std;
+using RosMessageTypes.Drone;
+
+
+
 namespace Rope
 {
     public class Winch : RopeSystemBase
@@ -28,8 +35,32 @@ namespace Rope
         public float ActualDistance;
 
         
+        ROSConnection ros;
 
-        
+        void WinchControlCallback(WinchControlMsg msg)
+        {
+            Debug.Log($"Received WinchControlMsg: target_length={msg.target_length}, winch_speed={msg.winch_speed}");
+            TargetLength = Mathf.Clamp(msg.target_length, MinLength, RopeLength);
+            WinchSpeed = msg.winch_speed;
+        }
+
+        void WinchControlTestCallback(StdMessages.Float32MultiArrayMsg msg)
+        {
+            if (msg.data.Length >= 2)
+            {
+                float testTargetLength = msg.data[0];
+                float testWinchSpeed = msg.data[1];
+                Debug.Log($"Received test Float32MultiArray: target_length={testTargetLength}, winch_speed={testWinchSpeed}");
+
+                TargetLength = Mathf.Clamp(testTargetLength, MinLength, RopeLength);
+                WinchSpeed = testWinchSpeed;
+            }
+            else
+            {
+                Debug.LogWarning("Received Float32MultiArray with insufficient data.");
+            }
+        }
+
         public void AttachLoad(GameObject load)
         {
             LoadAB = load.GetComponent<ArticulationBody>();
@@ -56,6 +87,14 @@ namespace Rope
         
         void Awake()
         {
+            ros = ROSConnection.GetOrCreateInstance();
+            Debug.Log("Subscribing to /winch_control");
+            ros.Subscribe<WinchControlMsg>("/winch_control", WinchControlCallback); // Change topic name if needed
+
+            Debug.Log("Subscribing to /winch_control_test");
+            ros.Subscribe<StdMessages.Float32MultiArrayMsg>("/winch_control_test", WinchControlTestCallback);
+
+
             if(loadBody == null) loadBody = new MixedBody(LoadAB, LoadRB);
         }
 
