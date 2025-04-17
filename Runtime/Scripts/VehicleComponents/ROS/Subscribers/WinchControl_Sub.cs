@@ -40,3 +40,5 @@ namespace VehicleComponents.ROS.Subscribers
 // Set the topic field in the inspector to /winch_control.
 
 // Drag and drop the GameObject that holds your Winch component into the winchController slot in the inspector.
+
+// https://chatgpt.com/share/68011919-5228-8004-9393-d79c3fcc1781
