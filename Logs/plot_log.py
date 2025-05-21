@@ -42,8 +42,8 @@ integral_end_time   = MST_time_stamp[1]
 
 plt.figure(1)
 plt.subplot(3, 1, 1)
-plt.plot(t, x_s1, label='x')
-plt.plot(t, x_s_d1, label='desired_x')
+plt.plot(t, x_s_d1, '#ff7f0e', label='Desired x')
+plt.plot(t, x_s1, '#1f77b4', linestyle='--', label='Real x')
 plt.ylabel("x-axis meter")
 plt.legend()
 if vertical_dashline_turn_on == True:
@@ -54,14 +54,15 @@ if vertical_dashline_turn_on == True:
                 verticalalignment='center', horizontalalignment='right')
 
 plt.subplot(3, 1, 2)
-plt.plot(t, x_s2, label='y')
-plt.plot(t, x_s_d2, label='desired_y')
+plt.plot(t, x_s_d2, '#ff7f0e', label='Desired y')
+plt.plot(t, x_s2, '#1f77b4', linestyle='--', label='Real y')
 plt.ylabel("y-axis meter")
 plt.legend()
 
 plt.subplot(3, 1, 3)
-plt.plot(t, x_s3, label='z')
-plt.plot(t, x_s_d3, label='desired_z')
+plt.plot(t, x_s_d3, '#ff7f0e', label='Desired z')
+plt.plot(t, x_s3, '#1f77b4', linestyle='--', label='Real z')
+
 plt.ylabel("z-axis meter")
 plt.xlabel("time (s)")
 plt.legend()
@@ -94,8 +95,8 @@ plt.tight_layout()
 
 plt.figure(3)
 plt.subplot(3, 1, 1)
-plt.plot(t, v_s1, label='v_x')
-plt.plot(t, v_s_d1, label='desired_v_x')
+plt.plot(t, v_s_d1, '#ff7f0e', label='Desired v_x')
+plt.plot(t, v_s1, '#1f77b4', linestyle='--', label='Real v_x')
 plt.ylabel("x-axis meter/sec")
 plt.legend()
 
@@ -118,14 +119,14 @@ if vertical_dashline_turn_on == True:
 
 
 plt.subplot(3, 1, 2)
-plt.plot(t, v_s2, label='v_y')
-plt.plot(t, v_s_d2, label='desired_v_y')
+plt.plot(t, v_s_d2, '#ff7f0e', label='Desired v_y')
+plt.plot(t, v_s2, '#1f77b4', linestyle='--', label='Real v_y')
 plt.ylabel("y-axis meter/sec")
 plt.legend()
 
 plt.subplot(3, 1, 3)
-plt.plot(t, v_s3, label='v_z')
-plt.plot(t, v_s_d3, label='desired_v_z')
+plt.plot(t, v_s_d3, '#ff7f0e', label='Desired v_z')
+plt.plot(t, v_s3, '#1f77b4', linestyle='--', label='Real v_z')
 plt.ylabel("z-axis meter/sec")
 plt.xlabel("time (s)")
 plt.legend()
@@ -208,9 +209,10 @@ ax = fig.add_subplot(111, projection='3d')
 
 # Plot the trajectories
 ax.scatter(x_s1[0], x_s2[0], x_s3[0], color='green', label='Start Point', marker = 'o')
-ax.plot(x_s1, x_s2, x_s3, color='blue', label='Real Trajectory')
-#ax.plot(x_s_d1, x_s_d2, x_s_d3, color='red', label='Destination Trajectory', marker = 'o')
 ax.plot(x_s_d1, x_s_d2, x_s_d3, c='red', label='Desired Trajectory')
+ax.plot(x_s1, x_s2, x_s3, color='blue', linestyle='--', label='Real Trajectory')
+#ax.plot(x_s_d1, x_s_d2, x_s_d3, color='red', label='Destination Trajectory', marker = 'o')
+
 
 # # Set labels and title
 # ax.set_title('3D Plot of Real and Desired Points')
