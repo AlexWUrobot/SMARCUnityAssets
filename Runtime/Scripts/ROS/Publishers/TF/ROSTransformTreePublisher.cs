@@ -6,7 +6,6 @@ using Unity.Robotics.Core;
 using Unity.Robotics.ROSTCPConnector.ROSGeometry;
 using UnityEngine;
 using ROS.Core;
-using Unity.Robotics.UrdfImporter;
 
 namespace ROS.Publishers
 {

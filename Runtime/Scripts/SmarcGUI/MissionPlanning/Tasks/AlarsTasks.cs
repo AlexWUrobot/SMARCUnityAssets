@@ -3,6 +3,25 @@ using SmarcGUI.MissionPlanning.Params;
 namespace SmarcGUI.MissionPlanning.Tasks
 {
 
+    public class AlarsBT : Task
+    {
+        public override void SetParams()
+        {
+            Name = "alars-bt";
+            Description = "Run the entire ALARS system";
+            Params.Add("initial_travel_alt", 25.0f);
+            Params.Add("search_position", new GeoPoint());
+            Params.Add("delivery_position", new GeoPoint());
+            Params.Add("recover_min_height_above_water", 3.0f);
+            Params.Add("recover_swoop_vertical", 5.0f);
+            Params.Add("recover_swoop_horizontal", 1.0f);
+            Params.Add("recover_straight_before_rope", 1.0f);
+            Params.Add("recover_straight_distance", 2.0f);
+            Params.Add("recover_raise_horizontal", 1.0f);
+            Params.Add("recover_raise_vertical", 15.0f);
+        }
+    }
+
     public class AlarsSearch : Task
     {
         public override void SetParams()

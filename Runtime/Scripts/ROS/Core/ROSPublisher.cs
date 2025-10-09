@@ -17,12 +17,13 @@ namespace ROS.Core
         bool registered = false;
         FrequencyTimer timer;
 
+        bool firstPub = true;
 
         protected override void StartROS()
         {
             timer = new FrequencyTimer(frequency);
             ROSMsg = new RosMsgType();
-            if(!registered)
+            if (!registered)
             {
                 rosCon.RegisterPublisher<RosMsgType>(topic);
                 registered = true;
@@ -53,6 +54,11 @@ namespace ROS.Core
         /// </summary>
         void FixedUpdate()
         {
+            if (firstPub)
+            {
+                timer.ExhaustTicks(Clock.Now);
+                firstPub = false;
+            }
             int i = 0;
             while (timer.NeedsTick(Clock.Now))
             {

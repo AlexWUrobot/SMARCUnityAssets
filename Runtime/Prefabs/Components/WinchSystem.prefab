@@ -200,6 +200,7 @@ GameObject:
   - component: {fileID: 1478194395349108320}
   - component: {fileID: 4333922878063932765}
   - component: {fileID: 6286577310385780153}
+  - component: {fileID: 8526856793064712946}
   m_Layer: 0
   m_Name: WinchToHook
   m_TagString: Untagged
@@ -328,6 +329,22 @@ MonoBehaviour:
   hasNewData: 0
   Force: 0
   Weight: 0
+--- !u!114 &8526856793064712946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3506910256720658690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c46e0240fc40324428fee17d50a9150f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  topic: sensor/load_cell_weight
+  NotARobot: 0
+  frequency: 10
+  ignoreSensorState: 0
 --- !u!1 &4039007730990099910
 GameObject:
   m_ObjectHideFlags: 0

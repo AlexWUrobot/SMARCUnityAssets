@@ -1,9 +1,7 @@
 using System;
 using UnityEngine;
-using Unity.Robotics.ROSTCPConnector;
 using RosMessageTypes.BuiltinInterfaces;
 using RosMessageTypes.Rosgraph;
-using Unity.Robotics.Core;
 using ROS.Core;
 
 namespace Unity.Robotics.Core

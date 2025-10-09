@@ -55,6 +55,8 @@ namespace SmarcGUI.Connections
             }
 
             rosBehaviours = FindObjectsByType<ROSBehaviour>(FindObjectsSortMode.None);
+            Debug.Log("Disabling ROSBehaviours until connected to ROS.");
+            foreach (var b in rosBehaviours) b.enabled = false;
 
             guiState = FindFirstObjectByType<GUIState>();
         }
@@ -134,10 +136,8 @@ namespace SmarcGUI.Connections
             }
 
             ConnectionInputsInteractable(!IsConnected);
-            foreach(var b in rosBehaviours)
-            {
-                b.enabled = IsConnected;
-            }
+            Debug.Log($"Toggling ROSBehaviours to {IsConnected}.");
+            foreach (var b in rosBehaviours) b.enabled = IsConnected;
 
         }
 

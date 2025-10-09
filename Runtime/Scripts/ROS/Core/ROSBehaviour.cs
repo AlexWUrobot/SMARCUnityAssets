@@ -125,16 +125,6 @@ namespace ROS.Core
         }
 
 
-
-        void Start()
-        {
-            // ROS stuff should be off by default, but we still want to init them if they were enabled on game start
-            // and THEN disable them
-            enabled = false;
-        }
-
-
-
         /// <summary>
         /// Override this method to initialize the ROS-related objects.
         /// This method is called after the ROS connection is established and the topic name is set.

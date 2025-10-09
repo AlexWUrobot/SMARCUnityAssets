@@ -71,6 +71,9 @@ namespace SmarcGUI.MissionPlanning.Tasks
                         case "move-to":
                             paramType = typeof(GeoPoint);
                             break;
+                        case "alars-bt":
+                            paramType = typeof(GeoPoint);
+                            break;
                         case "alars-search":
                             paramType = typeof(GeoPoint);
                             break;
