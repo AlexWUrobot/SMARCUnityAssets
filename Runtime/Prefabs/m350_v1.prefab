@@ -352,8 +352,6 @@ MonoBehaviour:
   MaxControllerOutputAltitude: 2000
   MaxControllerOutputPitchRoll: 2000
   MaxENUSpeed: 0.8
-  k_alt_pos_1800g: 3150
-  p_alt_pos_1800g: 0.9987
   K_VelForw: 4.7
   Z_VelForw: 0.3
   P_VelForw: 0.8
@@ -4079,7 +4077,7 @@ MonoBehaviour:
   linkName: gimbal_camera_link
   retryUntilSuccess: 1
   rotateForROSCamera: 0
-  roll: -90
+  roll: 90
   pitch: 0
   yaw: 0
   FixedRotation: 0
